@@ -35,7 +35,7 @@ d<-na.omit(d)
 
 d<-d %>%
   group_by(state,county) %>% 
-  summarise(FIPS=mean(FIPS),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), soyarea1617=0,soypct=0,soyval12=0, cornpct=NA,trumpch=NA, county_code=as.character(state_code)) %>% 
+  summarise(FIPS=mean(FIPS),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), soyarea1617=0,soypct=0,soyval12=0, trumpch=NA, county_code=as.character(state_code)) %>% 
   ungroup
 
 #Get corn vars:
@@ -70,6 +70,8 @@ land<-bind_rows(land,land1[c(2:4)])
 
 d<-left_join(d, land, by=c("state","county"))
 
+d <- d %>% mutate(cornpct=100*cornarea1617/lndarea, trumpch=(Rep18*Dem16)/(Rep16*Dem18))
+
 #Open soy states:
 d1<-read.csv("merge1618.csv", header=TRUE) 
 
@@ -82,7 +84,7 @@ fips_codes<-fips_codes %>%
 d1<-left_join(d1, fips_codes, by="FIPS")
 
 allstates<-bind_rows(d,d1)
-write.csv(allstates, "soydata.csv", row.names=FALSE)
+
 
 ```
 
