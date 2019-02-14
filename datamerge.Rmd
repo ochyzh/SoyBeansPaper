@@ -1,0 +1,141 @@
+---
+title: "datamerge"
+author: "Olga Chyzh"
+date: "February 12, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
+```
+
+```{r}
+rm(list=ls())
+library(tidycensus)
+#census_api_key("e0261990adaccb7e53c8afb2e20f156263bd5fb7", install=TRUE)
+library(tidyverse)
+library(magrittr)
+```
+
+
+Merge soy states and non-soy states:
+```{r}
+#Open non-soy states:
+d<-read.csv("nonsoystates.csv", header=TRUE, na.strings = "NA")
+
+#Aggregate by county and create a splitflag var:
+
+
+d<-d %>% 
+  mutate(Dem16=str_remove(as.character(Dem16),","), Rep16=str_remove(as.character(Rep16),","),Dem18=str_remove(as.character(Dem18),","),Rep18=str_remove(as.character(Rep18),",")) %>%
+  mutate(Dem16=as.numeric(Dem16),Rep16=as.numeric(Rep16),Dem18=as.numeric(Dem18),Rep18=as.numeric(Rep18))
+
+d<-na.omit(d) 
+
+d<-d %>%
+  group_by(state,county) %>% 
+  summarise(FIPS=mean(FIPS),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), soyarea1617=0,soypct=0,soyval12=0, cornpct=NA,trumpch=NA, county_code=as.character(state_code)) %>% 
+  ungroup
+
+#Get corn vars:
+d2<-read.csv("USDAdata.csv", header=TRUE)
+d2<-d2 %>% filter(Data.Item=="CORN - ACRES PLANTED") %>% select(State, County, Value) %>% mutate(Value=str_remove(Value,","), county=paste0(toupper(substr(County, 1, 1)), tolower(substring(County, 2))," County"), state_name=paste0(toupper(substr(State, 1, 1)), tolower(substring(State, 2)))) %>%  group_by(state_name, county) %>%  summarise(cornarea1617=sum(as.numeric(as.character(Value)), na.rm = TRUE)) %>% ungroup 
+
+d<-left_join(d, d2, by=c("county","state_name") )
+d$cornarea1617[is.na(d$cornarea1617)]<-0
+
+#Get land area:
+land<-read.csv("landarea.csv", header=TRUE) #from 2010 US census
+land<-land %>% select(Areaname,lndarea=LND110210D) %>% mutate(lndarea=as.numeric(as.character(lndarea))*640, Areaname=as.character(Areaname))
+land<-cbind.data.frame(land[,2],str_split_fixed(land$Areaname, pattern=", ", n=2))
+names(land)<-c("lndarea","county","state")
+land<-land %>% mutate(county=paste0(county," County"))
+
+#Get land area for VA and NV cities that are also counties:
+land1<-read_csv("land_VA&NVcities.csv", col_names = TRUE) 
+land1<-land1[4:nrow(land1),]
+
+land1<-land1 %>% 
+  select(FIPS=GEO.id2, county=`GEO.display-label`, lndarea=VD65, pop=VD70) %>% 
+  mutate(lndarea=as.numeric(as.character(lndarea))*0.00024711, county=as.character(county), pop=as.numeric(as.character(pop)))  %>% #area was in sq meters in this version of the census
+  separate(county,c("county","state"), sep=", ", fill="right") 
+
+land1$state[land1$state=="Virginia"]<-"VA"
+land1$state[land1$state=="Nevada"]<-"NV"
+
+land<-bind_rows(land,land1[c(2:4)])
+
+
+
+d<-left_join(d, land, by=c("state","county"))
+
+#Open soy states:
+d1<-read.csv("merge1618.csv", header=TRUE) 
+
+#Add state name:
+data(fips_codes)
+fips_codes<-fips_codes %>% 
+  mutate(state_code=gsub("(?<![0-9])0+", "", fips_codes$state_code, perl = TRUE)) %>%
+  mutate(state_code=as.numeric(as.character(state_code)),FIPS=as.integer(as.character(paste(fips_codes$state_code,fips_codes$county_code, sep=""))))
+
+d1<-left_join(d1, fips_codes, by="FIPS")
+
+allstates<-bind_rows(d,d1)
+write.csv(allstates, "soydata.csv", row.names=FALSE)
+
+```
+
+Census control variables:
+
+```{r}
+#acs1<-load_variables(2017,"acs1",cache=TRUE)
+
+#B01003_001--total polulation
+#B02001_002 --white population
+#B03001_003 --Hispanic or Latino
+#B19013_001 --median income
+#C16010_011--high school graduate
+#C16010_001--total (to divide high school grads by)
+#get_decennial(geography="state", variables=c("C16010_011","C16010_001"))
+
+income_latino<-get_acs(geography="county", variables=c("B01003_001","B02001_002","B03001_003","B19013_001"))
+income_latino$variable[income_latino$variable=="B01003_001"]<-"totpop1317"
+income_latino$variable[income_latino$variable=="B02001_002"]<-"whitepop1317"
+income_latino$variable[income_latino$variable=="B03001_003"]<-"latinopop1317"
+income_latino$variable[income_latino$variable=="B19013_001"]<-"medinc1317"
+
+income_latino<-income_latino %>% 
+  select(NAME, variable, estimate) %>%
+  separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
+  spread(variable, estimate) %>%
+mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317) %>%
+  select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317)
+
+allstates<-left_join(allstates, income_latino, by=c("state_name","county"))
+
+
+#sf1<-load_variables(2010,"sf1",cache=TRUE)
+#P001001--total population
+#P002001-urban and rural
+#P002003--inside urbanized areas (50,000 or more people)
+#P002004--inside urbanized clusters (at least 2,500 and less than 50,000 people)
+
+pop<-get_decennial(geography="county", variables=c("P001001","P002003","P002004"))
+pop$variable[pop$variable=="P001001"]<-"totpop"
+pop$variable[pop$variable=="P002003"]<-"urbarea"
+pop$variable[pop$variable=="P002004"]<-"urbclust"
+
+pop<-pop %>% 
+  separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
+  spread(variable, value) %>% mutate(urb2010=urbarea/totpop, urbclust2010=(urbarea+urbclust)/totpop) %>%
+  select(county, state_name, urb2010, urbclust2010)
+
+allstates<-left_join(allstates, pop, by=c("state_name","county"))
+
+write.csv(allstates, "soydata.csv", row.names=FALSE)
+#sf3<-load_variables(2000,"sf3",cache=TRUE)
+
+
+```
+
