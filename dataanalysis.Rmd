@@ -1,0 +1,54 @@
+---
+title: "dataanalysis"
+author: "Olga Chyzh"
+date: "February 14, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
+```
+
+```{r}
+rm(list=ls())
+trumpilot<-read.csv("soydata.csv", header=TRUE)
+## Generate measure of vote shift
+trumpilot$votech <- with(trumpilot, log(Rep18*Dem16/(Rep16*Dem18)))
+trumpilot<-subset(trumpilot, is.finite(votech)) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
+
+
+```
+
+Basic models:
+```{r}
+
+## Generate state variable for state fixed effects
+trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
+
+## All counties, predicted using percent of county GDP from soybeans
+summary(lm(data = trumpilot, votech ~ soyval12))
+summary(lm(data = trumpilot, votech ~ log(1 + soyval12)))
+summary(lm(data = trumpilot, votech ~ statefips + soyval12))
+summary(lm(data = trumpilot, votech ~ statefips + log(1 + soyval12)))
+
+## Counties not split between House districts, predicted using percent of county GDP from soybeans
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ soyval12))
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ log(1 + soyval12)))
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ statefips + soyval12))
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ statefips + log(1 + soyval12)))
+
+## All counties, predicted using percent of county area used for soybean planting
+summary(lm(data = subset(trumpilot, is.finite(votech)), votech ~ soypct))
+summary(lm(data = subset(trumpilot, is.finite(votech)), votech ~ log(1 + soypct)))
+summary(lm(data = subset(trumpilot, is.finite(votech)), votech ~ statefips + soypct))
+summary(lm(data = subset(trumpilot, is.finite(votech)), votech ~ statefips + log(1 + soypct)))
+
+## Counties not split between House districts, predicted using percent of county area used for soybean planting
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ soypct))
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ log(1 + soypct)))
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ statefips + soypct))
+summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ statefips + log(1 + soypct)))
+
+```
+

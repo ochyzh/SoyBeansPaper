@@ -1,3 +1,13 @@
 Authors:  Olga Chyzh and Robert Urbatsch
 Short Description:  Do soy prices affect support for Trump in soy-producing counties? Our initial result show decrease in soy prices is associated with decrease in support for the Republican party between 2016 and 2018 general elections.
 
+Files (in order of importance):
+1. datamerge.Rmd--combines the original data (merge1618.csv) with the data on county-level vote numbers for Dems and Reps for non-soy states (nonsoystates.csv) and adds measures of urbanization (from the 2010 US Census), percent latino, percent white, total population, and median income (from 2013-17 Census).
+2. merge1618-the original data on county-level vote for each party and soy production.
+3. nonsoystates-newly-collected data on county-level vote for each party in non-soyproducing states. Note: Virginia has counties that are named "cities", so careful when merging.
+4. soyacode.R--the pilot analysis on the original data.  
+5. USDAdata.csv--data on corn areas by county. 
+6. landarea.csv--data on land area by county.
+7. land_VA&NVcities.csv--some counties in VA and NV are called "cities," so these are the land area data for those.
+8. the final (merged) data file so far.
+9. dataanalysis.Rmd--a script for running regressions on the final data.
