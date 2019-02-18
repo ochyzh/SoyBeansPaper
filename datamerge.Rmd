@@ -84,7 +84,7 @@ fips_codes<-fips_codes %>%
 d1<-left_join(d1, fips_codes, by="FIPS")
 
 allstates<-bind_rows(d,d1)
-
+allstates<-unique(allstates)
 
 ```
 
@@ -113,6 +113,8 @@ income_latino<-income_latino %>%
   spread(variable, estimate) %>%
 mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317) %>%
   select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317)
+income_latino$county[income_latino$county=="Doña Ana County"]<-"Dona Ana County"
+income_latino$county[income_latino$county=="LaSalle Parish"]<-"La Salle Parish"
 
 allstates<-left_join(allstates, income_latino, by=c("state_name","county"))
 
@@ -132,8 +134,36 @@ pop<-pop %>%
   separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
   spread(variable, value) %>% mutate(urb2010=urbarea/totpop, urbclust2010=(urbarea+urbclust)/totpop) %>%
   select(county, state_name, urb2010, urbclust2010)
+pop$county[pop$county=="Do?a Ana County"]<-"Dona Ana County"
+pop$county[pop$county=="LaSalle Parish"]<-"La Salle Parish"
 
 allstates<-left_join(allstates, pop, by=c("state_name","county"))
+
+#Educational attainment:
+educ<-read_csv("educ.csv", col_names = TRUE)
+educ<-educ[2:nrow(educ),]
+educ<-educ %>% select(NAME=`GEO.display-label`,pop18_24=HC01_EST_VC02,lessthanHS=HC01_EST_VC03,HS=HC01_EST_VC04, SomeCol=HC01_EST_VC05, BA=HC01_EST_VC06) %>% 
+  separate(NAME,c("county","state_name"), sep=", ", fill="right")
+
+allstates<-left_join(allstates, educ, by=c("state_name","county"))
+
+#Trump's margin:
+trump2016<-read_csv("2016PresResults.csv", col_names = TRUE)
+trump2016<-trump2016 %>% select(county=county_name, state=state_abbr, trump2016=votes_gop, clinton2016=votes_dem, tot_votes2016=total_votes) %>% mutate(trumpmarg=(trump2016/tot_votes2016)-(clinton2016/tot_votes2016))
+
+allstates<-left_join(allstates, trump2016, by=c("state","county"))
+
+#GDP:
+gdp<-read_csv("GDP.csv", col_names = TRUE, skip=2)
+
+gdp<-gdp[1:12452,] %>% select(county=X2, state=X3, Industry=X5,  GDP2015=`2015`) %>% spread(Industry, GDP2015) %>% mutate(GDP2015=as.numeric(`All Industries`), GDP2015_gvnt=as.numeric(`Government and government enterprises`),GDP2015_goods=as.numeric(`Private goods-producing industries`),GDP2015_serv=as.numeric(`Private services-providing industries`)) %>% select(county, state, GDP2015, GDP2015_goods, GDP2015_serv) 
+
+ind<-setdiff(c(1:3091),grep(" City",gdp$county,ignore.case =TRUE))
+gdp$county[ind]<-paste0(gdp$county[ind]," County")
+gdp$county<-str_replace(gdp$county," City"," city")
+
+allstates<-left_join(allstates, gdp, by=c("state","county"))
+
 
 write.csv(allstates, "soydata.csv", row.names=FALSE)
 #sf3<-load_variables(2000,"sf3",cache=TRUE)

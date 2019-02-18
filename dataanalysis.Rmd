@@ -16,15 +16,16 @@ trumpilot<-read.csv("soydata.csv", header=TRUE)
 ## Generate measure of vote shift
 trumpilot$votech <- with(trumpilot, log(Rep18*Dem16/(Rep16*Dem18)))
 trumpilot<-subset(trumpilot, is.finite(votech)) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
-
+trumpilot$perc_noHS18_24<-with(trumpilot, lessthanHS/pop18_24)
+## Generate state variable for state fixed effects
+trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
 
 ```
 
 Basic models:
 ```{r}
 
-## Generate state variable for state fixed effects
-trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
+
 
 ## All counties, predicted using percent of county GDP from soybeans
 summary(lm(data = trumpilot, votech ~ soyval12))
@@ -51,4 +52,60 @@ summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech 
 summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech ~ statefips + log(1 + soypct)))
 
 ```
+
+Models with controls:
+```{r}
+## All counties, predicted using percent of county GDP from soybeans
+summary(lm(m1<-data = trumpilot, votech ~ soyval12 + log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + soyval12+ log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+
+## All counties, predicted using percent of county area used for soybean planting
+summary(lm(data = trumpilot, votech ~ soypct+ log(GDP2015)+log(medinc1317)+urb2010+perclatino1317+totpop1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ log(1 + soypct)+ log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + soypct+ log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + log(1 + soypct)+ log(GDP2015)+log(medinc1317)+totpop1317+urb2010+perclatino1317+trumpmarg))
+
+```
+
+Centering all variables:
+```{r}
+library(tidyverse)
+library(magrittr)
+center<-function(myvar){
+  (myvar-mean(myvar, na.rm=TRUE))
+}
+
+tr_cr<-trumpilot %>% 
+  select(votech,soyval12,soypct,GDP2015,medinc1317, totpop1317,urb2010,perclatino1317,trumpmarg)  %>% 
+  mutate(ln_GDP2015=log(GDP2015), ln_inc=log(medinc1317)) 
+
+tr_cr<-do.call(cbind,lapply(tr_cr,center))
+newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
+colnames(tr_cr)<-newnames
+
+trumpilot1<-cbind.data.frame(trumpilot,tr_cr)
+
+```
+
+
+Multi-level models:
+```{r}
+library(lme4)
+summary(mlm<-lmer(data = trumpilot1, votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+
+```
+
+
+Plots:
+
+```{r}
+library(ggplot2)
+
+p<-ggplot(data=trumpilot)+geom_point(aes(x=log(soyval12+1), y=log(medinc1317)))
+p
+
+```
+
 
