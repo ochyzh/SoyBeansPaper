@@ -93,7 +93,13 @@ trumpilot1<-cbind.data.frame(trumpilot,tr_cr)
 Multi-level models:
 ```{r}
 library(lme4)
+#Random intercepts:
 summary(mlm<-lmer(data = trumpilot1, votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+coef(mlm)
+fixef(mlm) #average coefficient effects
+ranef(mlm) #Random intercepts
+
+
 
 ```
 
