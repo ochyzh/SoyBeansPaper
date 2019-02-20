@@ -35,12 +35,16 @@ d<-na.omit(d)
 
 d<-d %>%
   group_by(state,county) %>% 
-  summarise(FIPS=mean(FIPS),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), soyarea1617=0,soypct=0,soyval12=0, trumpch=NA, county_code=as.character(state_code)) %>% 
-  ungroup
+  summarise(state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), soyarea1617=0,soypct=0,soyval12=0, trumpch=(Rep18*Dem16)/(Rep16*Dem18), county_code=as.character(state_code)) %>% 
+  ungroup %>% mutate(county=tolower(county))
 
 #Get corn vars:
-d2<-read.csv("USDAdata.csv", header=TRUE)
-d2<-d2 %>% filter(Data.Item=="CORN - ACRES PLANTED") %>% select(State, County, Value) %>% mutate(Value=str_remove(Value,","), county=paste0(toupper(substr(County, 1, 1)), tolower(substring(County, 2))," County"), state_name=paste0(toupper(substr(State, 1, 1)), tolower(substring(State, 2)))) %>%  group_by(state_name, county) %>%  summarise(cornarea1617=sum(as.numeric(as.character(Value)), na.rm = TRUE)) %>% ungroup 
+d2<-read_csv("USDAdata.csv", col_names =TRUE)
+d2<-d2 %>% filter(`Data Item`=="CORN - ACRES PLANTED")%>% select(State, County, Value)%>% mutate(Value=str_remove(Value,","), county=tolower(County), state_name=paste0(toupper(substr(State, 1, 1)), tolower(substring(State, 2))), cornarea1617=Value) %>% select(county, state_name, cornarea1617)
+
+ind<-setdiff(c(1:nrow(d2)),grep(" City",d2$county,ignore.case =TRUE))
+d2$county[ind]<-paste0(d2$county[ind]," County")
+d2$county<-str_replace(d2$county," City"," city")
 
 d<-left_join(d, d2, by=c("county","state_name") )
 d$cornarea1617[is.na(d$cornarea1617)]<-0
@@ -50,7 +54,12 @@ land<-read.csv("landarea.csv", header=TRUE) #from 2010 US census
 land<-land %>% select(Areaname,lndarea=LND110210D) %>% mutate(lndarea=as.numeric(as.character(lndarea))*640, Areaname=as.character(Areaname))
 land<-cbind.data.frame(land[,2],str_split_fixed(land$Areaname, pattern=", ", n=2))
 names(land)<-c("lndarea","county","state")
-land<-land %>% mutate(county=paste0(county," County"))
+
+land<-land %>% mutate(county=tolower(as.character(county)), state=as.character(state))
+
+ind<-setdiff(c(1:nrow(land)),grep(" City",land$county,ignore.case =TRUE))
+land$county[ind]<-paste0(land$county[ind]," county")
+
 
 #Get land area for VA and NV cities that are also counties:
 land1<-read_csv("land_VA&NVcities.csv", col_names = TRUE) 
@@ -70,7 +79,7 @@ land<-bind_rows(land,land1[c(2:4)])
 
 d<-left_join(d, land, by=c("state","county"))
 
-d <- d %>% mutate(cornpct=100*cornarea1617/lndarea, trumpch=(Rep18*Dem16)/(Rep16*Dem18))
+d <- d %>% mutate(cornpct=100*cornarea1617/lndarea)
 
 #Open soy states:
 d1<-read.csv("merge1618.csv", header=TRUE) 
@@ -140,10 +149,16 @@ pop$county[pop$county=="LaSalle Parish"]<-"La Salle Parish"
 allstates<-left_join(allstates, pop, by=c("state_name","county"))
 
 #Educational attainment:
-educ<-read_csv("educ.csv", col_names = TRUE)
+educ<-read_csv("ACS_17_5YR_B15003_with_ann.csv", col_names = TRUE)
 educ<-educ[2:nrow(educ),]
-educ<-educ %>% select(NAME=`GEO.display-label`,pop18_24=HC01_EST_VC02,lessthanHS=HC01_EST_VC03,HS=HC01_EST_VC04, SomeCol=HC01_EST_VC05, BA=HC01_EST_VC06) %>% 
-  separate(NAME,c("county","state_name"), sep=", ", fill="right")
+educ<-educ %>% select(NAME=`GEO.display-label`,tot=HD01_VD01,HS=HD01_VD17, GED=HD01_VD18) %>% 
+  separate(NAME,c("county","state_name"), sep=", ", fill="right") %>%
+  mutate(HS=as.numeric(HS),GED=as.numeric(GED), tot=as.numeric(tot)) %>%
+  mutate(perc_HS_GED=(HS+GED)/tot) %>% select(county, state_name, perc_HS_GED)
+educ$county[educ$county=="Do<f1>a Ana County"]<-"Dona Ana County"
+educ$county[educ$county=="LaSalle Parish"]<-"La Salle Parish"
+
+"Do<f1>a Ana County"
 
 allstates<-left_join(allstates, educ, by=c("state_name","county"))
 

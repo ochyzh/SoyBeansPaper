@@ -16,7 +16,7 @@ trumpilot<-read.csv("soydata.csv", header=TRUE)
 ## Generate measure of vote shift
 trumpilot$votech <- with(trumpilot, log(Rep18*Dem16/(Rep16*Dem18)))
 trumpilot<-subset(trumpilot, is.finite(votech)) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
-trumpilot$perc_noHS18_24<-with(trumpilot, lessthanHS/pop18_24)
+
 ## Generate state variable for state fixed effects
 trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
 
@@ -56,28 +56,28 @@ summary(lm(data = subset(trumpilot, is.finite(votech) & Splitflag == 0), votech 
 Models with controls:
 ```{r}
 ## All counties, predicted using percent of county GDP from soybeans
-summary(lm(data = trumpilot, m1<-votech ~ soyval12 + log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot, votech ~ log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot, votech ~ statefips + soyval12+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot, votech ~ statefips + log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ soyval12 + log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + soyval12+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
 
 ## Counties not split between House districts, predicted using percent of county GDP from soybeans
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], m1<-votech ~ soyval12 + log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + soyval12+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], m1<-votech ~ soyval12 + log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + soyval12+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + log(1 + soyval12)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
 
 ## All counties, predicted using percent of county area used for soybean planting
-summary(lm(data = trumpilot, votech ~ soypct+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot, votech ~ log(1 + soypct)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot, votech ~ statefips + soypct+ log(GDP2015)+log(medinc1317)++log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot, votech ~ statefips + log(1 + soypct)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ soypct+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ log(1 + soypct)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + soypct+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot, votech ~ statefips + log(1 + soypct)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
 
 ## Counties not split between House districts, predicted using percent of county area used for soybean planting
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ soypct+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ log(1 + soypct)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + soypct+ log(GDP2015)+log(medinc1317)++log(totpop1317)+urb2010+perclatino1317+trumpmarg))
-summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + log(1 + soypct)+ log(GDP2015)+log(medinc1317)+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ soypct+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ log(1 + soypct)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + soypct+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
+summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + log(1 + soypct)+ log(GDP2015)+log(medinc1317)+perc_HS_GED+log(totpop1317)+urb2010+perclatino1317+trumpmarg))
 
 
 ```
@@ -91,7 +91,7 @@ center<-function(myvar){
 }
 
 tr_cr<-trumpilot %>% 
-  select(votech,soyval12,soypct,GDP2015,medinc1317, totpop1317,urb2010,perclatino1317,trumpmarg)  %>% 
+  select(votech,soyval12,soypct,GDP2015,medinc1317,perc_HS_GED, totpop1317,urb2010,perclatino1317,trumpmarg)  %>% 
   mutate(ln_GDP2015=log(GDP2015), ln_inc=log(medinc1317), ln_pop=log(totpop1317), ln_soyval12=log(soyval12+1), ln_soypct=log(soypct+1)) 
 
 tr_cr<-do.call(cbind,lapply(tr_cr,center))
@@ -108,19 +108,19 @@ Multi-level models:
 library(lme4)
 #Random intercepts
 ## All counties, predicted using percent of county GDP from soybeans
-summary(mlm<-lmer(data = trumpilot1, votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(mlm<-lmer(data = trumpilot1, votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
 coef(mlm)
 fixef(mlm) #average coefficient effects
 ranef(mlm) #Random intercepts
-summary(lmer(data = trumpilot1, votech_cr ~ ln_soyval12_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(lmer(data = trumpilot1, votech_cr ~ ln_soyval12_cr + ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
 
 ##Counties not split between House districts, predicted using percent of county GDP from soybeans
-summary(lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
-summary(lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ ln_soyval12_cr +ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ ln_soyval12_cr +ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
 
 ## All counties, predicted using percent of county area used for soybean planting
-summary(mlm<-lmer(data = trumpilot1, votech_cr ~ soypct_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
-summary(mlm<-lmer(data = trumpilot1, votech_cr ~ ln_soypct_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(mlm<-lmer(data = trumpilot1, votech_cr ~ soypct_cr + ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(mlm<-lmer(data = trumpilot1, votech_cr ~ ln_soypct_cr + ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
 
 ## Counties not split between House districts, predicted using percent of county area used for soybean planting
 summary(mlm<-lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ soypct_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
@@ -128,6 +128,18 @@ summary(mlm<-lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ ln_soy
 
 ```
 
+State and district ranefs:
+```{r}
+trumpilot1<-trumpilot1 %>% mutate(dist_state=as.factor(paste0(state,Dist)))
 
+##Counties not split between House districts, predicted using percent of county GDP from soybeans
+summary(lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ soyval12_cr + ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+ (1 | dist_state)))
+summary(lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ ln_soyval12_cr +ln_GDP2015_cr+ln_inc_cr+perc_HS_GED_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+ (1 | dist_state)))
+
+## Counties not split between House districts, predicted using percent of county area used for soybean planting
+summary(mlm<-lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ soypct_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | dist_state)))
+summary(mlm<-lmer(data = trumpilot1[trumpilot$Splitflag==0,], votech_cr ~ ln_soypct_cr + ln_GDP2015_cr+ln_inc_cr+totpop1317_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | dist_state)))
+
+```
 
 
