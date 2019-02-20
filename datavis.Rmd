@@ -1,0 +1,122 @@
+---
+title: "datavis"
+author: "Olga Chyzh"
+date: "February 19, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
+```
+
+Libraries:
+```{r}
+library(plyr)
+library(dplyr)
+library(ggplot2)
+library(maps)
+library(mapdata)
+library(lubridate)
+library(leaflet)
+library(tidyverse)
+library(magrittr)
+```
+
+
+Open the data:
+```{r}
+rm(list=ls())
+trumpilot<-read.csv("soydata.csv", header=TRUE)
+## Generate measure of vote shift
+trumpilot$votech <- with(trumpilot, log(Rep18*Dem16/(Rep16*Dem18)))
+#trumpilot<-subset(trumpilot, is.finite(votech)) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
+
+## Generate state variable for state fixed effects
+trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
+
+trumpilot<-trumpilot %>% mutate(subregion=tolower(str_remove(county, " County")), region=tolower(state_name)) 
+
+```
+
+Maps:
+```{r}
+counties <- map_data("county") #map_data function is under the ggplot2 package. 
+p <- ggplot() +
+  geom_polygon(data=counties, aes(x=long, y=lat, group=group), fill="grey85", color="white")
+#geon_polygon is making the base boarder for world map. By assigning group, we make R draw lines only withing each country.
+p
+
+usamap <- p+theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())
+#We made better map without grey background and useless longitude and latitude axes.
+usamap
+```
+
+Merge with data:
+```{r}
+counties$subregion<-str_remove(counties$subregion," county")
+trumpilot$subregion<-str_remove(trumpilot$subregion," county")
+trumpilot$subregion<-str_remove(trumpilot$subregion," parish")
+trumpilot$subregion[trumpilot$subregion=="dekalb"]<-"de kalb"
+trumpilot$subregion[trumpilot$subregion=="desoto"]<-"de soto"
+trumpilot$subregion[trumpilot$subregion=="dewitt"]<-"de witt"
+trumpilot$subregion[trumpilot$subregion=="dupage"]<-"du page"
+trumpilot$subregion[trumpilot$subregion=="hampton city"]<-"hampton"
+trumpilot$subregion[trumpilot$subregion=="lamoure"]<-"la moure"
+trumpilot$subregion[trumpilot$subregion=="laporte"]<-"la porte"
+trumpilot$subregion[trumpilot$subregion=="lasalle"]<-"la salle"
+trumpilot$subregion[trumpilot$subregion=="newport news city"]<-"newport news"
+trumpilot$subregion[trumpilot$subregion=="norfolk city"]<-"norfolk"
+trumpilot$subregion[trumpilot$subregion=="o'brien"]<-"obrien"
+trumpilot$subregion[trumpilot$subregion=="prince george's"]<-"prince georges"
+trumpilot$subregion[trumpilot$subregion=="queen ann's"]<-"queen anns"
+trumpilot$subregion[trumpilot$subregion=="suffolk city"]<-"suffolk"
+trumpilot$subregion[trumpilot$subregion=="virginia beach city"]<-"virginia beach"
+trumpilot$subregion[trumpilot$subregion=="yellowstone"]<-"yellowstone national"
+trumpilot$subregion<-str_remove(trumpilot$subregion,"\\.")
+
+counties<-counties %>% mutate(subregion=trimws(subregion), region=trimws(region), id=paste(region,subregion, sep="_"))
+trumpilot<- trumpilot %>% mutate(subregion=trimws(subregion), region=trimws(region),id=paste(region, subregion, sep="_"))
+mydata<-left_join(counties, trumpilot, by=c("region","subregion"))
+mydata$soyval12[is.na(mydata$soyval12)]<-0
+
+```
+
+Plot soy data:
+
+```{r}
+
+
+
+p <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=(soyval12+1)), colour="black") +
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_gradient(name="Soy Production, %GDP",breaks = c(0,5,10,20), labels = c("0", "5", "10","20"),trans = "log",low = "white", high = "brown") 
+
+p
+
+```
+
+```{r}
+View(unique(cbind.data.frame(mydata$region[is.na(mydata$soyval12)],mydata$subregion[is.na(mydata$soyval12)])))
+View(unique(counties$id))
+View(unique(mydata$id[is.na(mydata$soyval12)]))
+
+```
+
+
