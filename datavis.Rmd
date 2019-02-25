@@ -37,6 +37,18 @@ trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
 
 trumpilot<-trumpilot %>% mutate(subregion=tolower(str_remove(county, " County")), region=tolower(state_name)) 
 
+trumpilot$votech1<-with(trumpilot, ((Rep18-Dem18)/(Rep18+Dem18)-(Rep16-Dem16)/(Rep16+Dem16)))
+#trumpilot$votech1[trumpilot$votech1< (-1) & is.finite(trumpilot$votech1)]<--1
+#trumpilot$votech1[trumpilot$votech1> (-1) & trumpilot$votech1 < (-.75) & is.finite(trumpilot$votech1)]<--.75
+#trumpilot$votech1[trumpilot$votech1>=-.75 & trumpilot$votech1< (-.5) & is.finite(trumpilot$votech1)]<--.5
+#trumpilot$votech1[trumpilot$votech1>=-.5 & trumpilot$votech1< -.25 & is.finite(trumpilot$votech1)]<--.25
+#trumpilot$votech1[trumpilot$votech1>=-.25 & trumpilot$votech1<0 & is.finite(trumpilot$votech1)]<-0
+#trumpilot$votech1[trumpilot$votech1>=0 & trumpilot$votech1<.25 & is.finite(trumpilot$votech1)]<-.25
+#trumpilot$votech1[trumpilot$votech1>=.25 & trumpilot$votech1<.5 & is.finite(trumpilot$votech1)]<-.5
+#trumpilot$votech1[trumpilot$votech1>=.5 & trumpilot$votech1<.75 & is.finite(trumpilot$votech1)]<-.75
+#trumpilot$votech1[trumpilot$votech1>=.75 & is.finite(trumpilot$votech1)]<-1
+#trumpilot$votech1<-factor(trumpilot$votech1, ordered=TRUE)
+
 ```
 
 Maps:
@@ -47,7 +59,11 @@ p <- ggplot() +
 #geon_polygon is making the base boarder for world map. By assigning group, we make R draw lines only withing each country.
 p
 
-usamap <- p+theme(axis.text=element_blank(),
+states<-map_data("state")
+
+usamap <- p+
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
               axis.ticks=element_blank(),
               axis.title.x=element_blank(),
               axis.title.y=element_blank(),
@@ -96,7 +112,8 @@ Plot soy data:
 
 
 p <- ggplot() +
-  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=(soyval12+1)), colour="black") +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=(soyval12+1)), colour="gray") +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
   theme(axis.text=element_blank(),
               axis.ticks=element_blank(),
               axis.title.x=element_blank(),
@@ -110,12 +127,63 @@ p <- ggplot() +
 
 p
 
+ggsave("soybean_map.pdf")
+
+#unlogged soyval12:
+mydata$soy_scale<-0
+mydata$soy_scale[mydata$soyval12<1]<-1
+mydata$soy_scale[mydata$soyval12>=1 & mydata$soyval12<2]<-2
+mydata$soy_scale[mydata$soyval12>=2 & mydata$soyval12<3]<-3
+mydata$soy_scale[mydata$soyval12>=3 & mydata$soyval12<6]<-6
+mydata$soy_scale[mydata$soyval12>=6 & mydata$soyval12<9]<-9
+mydata$soy_scale[mydata$soyval12>=9 & mydata$soyval12<16]<-16
+mydata$soy_scale[mydata$soyval12>=16 ]<-26
+mydata$soy_scale<-factor(mydata$soy_scale, ordered=TRUE)
+
+
+p <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=soy_scale), colour="gray") +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_brewer(name="Soy Production, %GDP",palette = "Reds",labels=c("<1","<2","<3","<6","<9","<16","<26"))
+
+p
+
 ```
 
+Plot change in Rep votes:
+
 ```{r}
-View(unique(cbind.data.frame(mydata$region[is.na(mydata$soyval12)],mydata$subregion[is.na(mydata$soyval12)])))
-View(unique(counties$id))
-View(unique(mydata$id[is.na(mydata$soyval12)]))
+
+
+
+
+
+
+
+p1 <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=(votech)), colour="gray") +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_continuous(name="Rep. Vote Change")
+
+p1
 
 ```
 
