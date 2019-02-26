@@ -169,10 +169,15 @@ GDP from BEA:
 
 gdp<-read.csv("GDP.csv", header = TRUE, skip=2)
 
+gdp12 <-gdp[1:12452,] %>% select(county=X.1, state=X.2, Industry=X.4,  GDP2015=X2012) %>% spread(Industry, GDP2015)
+names(gdp12)<-c("county","state","GDP2012_gvnt","GDP2012_goods","GDP2012_serv","GDP2012")
+
 gdp<-gdp[1:12452,] %>% select(county=X.1, state=X.2, Industry=X.4,  GDP2015=X2015) %>% spread(Industry, GDP2015)
 names(gdp)<-c("county","state","GDP2015_gvnt","GDP2015_goods","GDP2015_serv","GDP2015")
 
-gdp<-gdp %>% mutate(county=as.character(county),GDP2015=as.numeric(GDP2015), GDP2015_gvnt=as.numeric(GDP2015_gvnt),GDP2015_goods=as.numeric(GDP2015_goods),GDP2015_serv=as.numeric(GDP2015_serv)) 
+gdp<-left_join(gdp, gdp12)
+
+gdp<-gdp %>% mutate(county=as.character(county),GDP2015=as.numeric(GDP2015), GDP2015_gvnt=as.numeric(GDP2015_gvnt),GDP2015_goods=as.numeric(GDP2015_goods),GDP2015_serv=as.numeric(GDP2015_serv),GDP2012=as.numeric(GDP2012), GDP2012_gvnt=as.numeric(GDP2012_gvnt),GDP2012_goods=as.numeric(GDP2012_goods),GDP2012_serv=as.numeric(GDP2012_serv)) 
 
 ind<-grep(" City",gdp$county,ignore.case =TRUE)
 gdp$county[ind]<-str_replace(gdp$county[ind]," \\(Independent City\\)"," city")
