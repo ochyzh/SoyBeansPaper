@@ -21,6 +21,8 @@ library(lubridate)
 library(leaflet)
 library(tidyverse)
 library(magrittr)
+library(usmap)
+
 ```
 
 
@@ -37,17 +39,6 @@ trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
 
 trumpilot<-trumpilot %>% mutate(subregion=tolower(str_remove(county, " County")), region=tolower(state_name)) 
 
-trumpilot$votech1<-with(trumpilot, ((Rep18-Dem18)/(Rep18+Dem18)-(Rep16-Dem16)/(Rep16+Dem16)))
-#trumpilot$votech1[trumpilot$votech1< (-1) & is.finite(trumpilot$votech1)]<--1
-#trumpilot$votech1[trumpilot$votech1> (-1) & trumpilot$votech1 < (-.75) & is.finite(trumpilot$votech1)]<--.75
-#trumpilot$votech1[trumpilot$votech1>=-.75 & trumpilot$votech1< (-.5) & is.finite(trumpilot$votech1)]<--.5
-#trumpilot$votech1[trumpilot$votech1>=-.5 & trumpilot$votech1< -.25 & is.finite(trumpilot$votech1)]<--.25
-#trumpilot$votech1[trumpilot$votech1>=-.25 & trumpilot$votech1<0 & is.finite(trumpilot$votech1)]<-0
-#trumpilot$votech1[trumpilot$votech1>=0 & trumpilot$votech1<.25 & is.finite(trumpilot$votech1)]<-.25
-#trumpilot$votech1[trumpilot$votech1>=.25 & trumpilot$votech1<.5 & is.finite(trumpilot$votech1)]<-.5
-#trumpilot$votech1[trumpilot$votech1>=.5 & trumpilot$votech1<.75 & is.finite(trumpilot$votech1)]<-.75
-#trumpilot$votech1[trumpilot$votech1>=.75 & is.finite(trumpilot$votech1)]<-1
-#trumpilot$votech1<-factor(trumpilot$votech1, ordered=TRUE)
 
 ```
 
@@ -157,20 +148,48 @@ p <- ggplot() +
 
 p
 
+#Curved map:
+trumpilot$soy_scale<-0
+trumpilot$soy_scale[trumpilot$soyval12<1]<-1
+trumpilot$soy_scale[trumpilot$soyval12>=1 & trumpilot$soyval12<2]<-2
+trumpilot$soy_scale[trumpilot$soyval12>=2 & trumpilot$soyval12<3]<-3
+trumpilot$soy_scale[trumpilot$soyval12>=3 & trumpilot$soyval12<6]<-6
+trumpilot$soy_scale[trumpilot$soyval12>=6 & trumpilot$soyval12<9]<-9
+trumpilot$soy_scale[trumpilot$soyval12>=9 & trumpilot$soyval12<16]<-16
+trumpilot$soy_scale[trumpilot$soyval12>=16 ]<-26
+trumpilot$soy_scale<-factor(trumpilot$soy_scale, ordered=TRUE)
+mapdata<- trumpilot %>% select(fips=FIPS, soy_scale) %>% mutate(fips=as.character(str_pad(fips, 5, pad = "0")))
+
+
+
+p <- plot_usmap(region="counties", data=mapdata, values="soy_scale")+
+  scale_fill_brewer(name="Soy Production, %GDP",palette = "Reds",labels=c("<1","<2","<3","<6","<9","<16","<26"))+
+   					 theme(legend.position="bottom")+guides(fill=guide_legend( title.position="top"))
+
+p
+
+ggsave("map_soy_curved.pdf")
+
 ```
 
 Plot change in Rep votes:
 
 ```{r}
 
+mydata$votech[!is.finite(mydata$votech)]<-0
 
-
-
-
-
+mydata$votech1<-NA
+mydata$votech1[mydata$votech<(-1)]<-1
+mydata$votech1[mydata$votech>=(-1) & mydata$votech<(-.5) ]<-2
+mydata$votech1[mydata$votech>=(-.5) & mydata$votech<(0) ]<-3
+mydata$votech1[mydata$votech==0  ]<-4
+mydata$votech1[mydata$votech>0 & mydata$votech<.5]<-5
+mydata$votech1[mydata$votech>=0.5 & mydata$votech<1]<-6
+mydata$votech1[mydata$votech>=1]<-7
+mydata$votech1<-factor(mydata$votech1, ordered=TRUE)
 
 p1 <- ggplot() +
-  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=(votech)), colour="gray") +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=votech1), colour="gray") +
   geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
   theme(axis.text=element_blank(),
               axis.ticks=element_blank(),
@@ -181,9 +200,66 @@ p1 <- ggplot() +
               panel.border = element_blank(),
               panel.background = element_blank())+
    					 theme(legend.position="bottom") +
-  scale_fill_continuous(name="Rep. Vote Change")
+  scale_fill_brewer(name="Vote Change", palette="RdBu", direction=-1,labels=c("<-1","<-0.5","<0","0 or missing","<0.5","<1",">1"))
 
 p1
+
+
+
+p1 <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=votech2), colour="gray") +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(nrow=3, title.position="top"))
+
+p1
+
+
+
+mydata$votech2<-NA
+mydata$votech2[exp(mydata$votech)<0.9]<-1
+mydata$votech2[exp(mydata$votech)>=0.9 & exp(mydata$votech)<.95]<-2
+mydata$votech2[exp(mydata$votech)>=0.95 & exp(mydata$votech)<.99]<-3
+mydata$votech2[exp(mydata$votech)>=0.99 & exp(mydata$votech)<1]<-4
+mydata$votech2[exp(mydata$votech)==1  ]<-5
+mydata$votech2[exp(mydata$votech)>1 & exp(mydata$votech)<1.01]<-6
+mydata$votech2[exp(mydata$votech)>=1.01 & exp(mydata$votech)<1.05]<-7
+mydata$votech2[exp(mydata$votech)>=1.05 & exp(mydata$votech)<1.1]<-8
+mydata$votech2[exp(mydata$votech)>=1.1 ]<-9
+mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
+
+
+
+#Curved map
+trumpilot$votech2<-NA
+
+trumpilot$votech2[exp(trumpilot$votech)<0.9]<-1
+trumpilot$votech2[exp(trumpilot$votech)>=0.9 & exp(trumpilot$votech)<.95]<-2
+trumpilot$votech2[exp(trumpilot$votech)>=0.95 & exp(trumpilot$votech)<.99]<-3
+trumpilot$votech2[exp(trumpilot$votech)>=0.99 & exp(trumpilot$votech)<1]<-4
+trumpilot$votech2[exp(trumpilot$votech)==1  ]<-5
+trumpilot$votech2[exp(trumpilot$votech)>1 & exp(trumpilot$votech)<1.01]<-6
+trumpilot$votech2[exp(trumpilot$votech)>=1.01 & exp(trumpilot$votech)<1.05]<-7
+trumpilot$votech2[exp(trumpilot$votech)>=1.05 & exp(trumpilot$votech)<1.1]<-8
+trumpilot$votech2[exp(trumpilot$votech)>=1.1 ]<-9
+trumpilot$votech2<-factor(trumpilot$votech2, ordered=TRUE)
+mapdata1<- trumpilot %>% select(fips=FIPS, votech2) %>% mutate(fips=as.character(str_pad(fips, 5, pad = "0")))
+
+
+p <- plot_usmap(region="counties", data=mapdata1, values="votech2")+
+  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9),labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +
+   					 theme(legend.position="bottom")+guides(fill=guide_legend( title.position="top"))
+
+ggsave("map_votech.pdf")
+
 
 ```
 
