@@ -177,7 +177,7 @@ names(gdp)<-c("county","state","GDP2015_gvnt","GDP2015_goods","GDP2015_serv","GD
 
 gdp<-left_join(gdp, gdp12)
 
-gdp<-gdp %>% mutate(county=as.character(county),GDP2015=as.numeric(GDP2015), GDP2015_gvnt=as.numeric(GDP2015_gvnt),GDP2015_goods=as.numeric(GDP2015_goods),GDP2015_serv=as.numeric(GDP2015_serv),GDP2012=as.numeric(GDP2012), GDP2012_gvnt=as.numeric(GDP2012_gvnt),GDP2012_goods=as.numeric(GDP2012_goods),GDP2012_serv=as.numeric(GDP2012_serv)) 
+gdp<-gdp %>% mutate(county=as.character(county),GDP2015=as.numeric(as.character(GDP2015)), GDP2015_gvnt=as.numeric(as.character(GDP2015_gvnt)),GDP2015_goods=as.numeric(as.character(GDP2015_goods)),GDP2015_serv=as.numeric(as.character(GDP2015_serv)),GDP2012=as.numeric(as.character(GDP2012)), GDP2012_gvnt=as.numeric(as.character(GDP2012_gvnt)),GDP2012_goods=as.numeric(as.character(GDP2012_goods)),GDP2012_serv=as.numeric(as.character(GDP2012_serv))) 
 
 ind<-grep(" City",gdp$county,ignore.case =TRUE)
 gdp$county[ind]<-str_replace(gdp$county[ind]," \\(Independent City\\)"," city")

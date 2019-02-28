@@ -22,6 +22,7 @@ library(leaflet)
 library(tidyverse)
 library(magrittr)
 library(usmap)
+library(mapproj)
 
 ```
 
@@ -38,9 +39,13 @@ trumpilot$votech <- with(trumpilot, log(Rep18*Dem16/(Rep16*Dem18)))
 trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
 
 trumpilot<-trumpilot %>% mutate(subregion=tolower(str_remove(county, " County")), region=tolower(state_name)) 
-
+trumpilot$soyval12v1<-with(trumpilot, 100*sales_USD/(GDP2012*1000))
 
 ```
+
+
+
+
 
 Maps:
 ```{r}
@@ -64,6 +69,15 @@ usamap <- p+
               panel.background = element_blank())
 #We made better map without grey background and useless longitude and latitude axes.
 usamap
+
+#usamap + coord_map("albers",lat0=39, lat1=45)
+#usamap + coord_map("mercator")
+#usamap + coord_map("gilbert")
+#usamap + coord_map("stereographic")
+#usamap + coord_map("cylindrical")
+#usamap + coord_map("azequalarea")
+
+
 ```
 
 Merge with data:
@@ -100,40 +114,16 @@ Plot soy data:
 
 ```{r}
 
-
-
-p <- ggplot() +
-  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=(soyval12+1)), colour="gray") +
-  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
-  theme(axis.text=element_blank(),
-              axis.ticks=element_blank(),
-              axis.title.x=element_blank(),
-              axis.title.y=element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              panel.border = element_blank(),
-              panel.background = element_blank())+
-   					 theme(legend.position="bottom") +
-  scale_fill_gradient(name="Soy Production, %GDP",breaks = c(0,5,10,20), labels = c("0", "5", "10","20"),trans = "log",low = "white", high = "brown") 
-
-p
-
-ggsave("soybean_map.pdf")
-
-#unlogged soyval12:
+#Sales USD
 mydata$soy_scale<-0
-mydata$soy_scale[mydata$soyval12<1]<-1
-mydata$soy_scale[mydata$soyval12>=1 & mydata$soyval12<2]<-2
-mydata$soy_scale[mydata$soyval12>=2 & mydata$soyval12<3]<-3
-mydata$soy_scale[mydata$soyval12>=3 & mydata$soyval12<6]<-6
-mydata$soy_scale[mydata$soyval12>=6 & mydata$soyval12<9]<-9
-mydata$soy_scale[mydata$soyval12>=9 & mydata$soyval12<16]<-16
-mydata$soy_scale[mydata$soyval12>=16 ]<-26
+mydata$soy_scale[mydata$sales_USD>=1000 & mydata$sales_USD<1595250]<-1
+mydata$soy_scale[mydata$sales_USD>=1595250 & mydata$sales_USD<10285500]<-2
+mydata$soy_scale[mydata$sales_USD>=10285500 & mydata$sales_USD<33130500]<-3
+mydata$soy_scale[mydata$sales_USD>=33130500 ]<-4
 mydata$soy_scale<-factor(mydata$soy_scale, ordered=TRUE)
 
-
 p <- ggplot() +
-  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=soy_scale), colour="gray") +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=soy_scale),color="gray",  size=.0001) +
   geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
   theme(axis.text=element_blank(),
               axis.ticks=element_blank(),
@@ -144,31 +134,93 @@ p <- ggplot() +
               panel.border = element_blank(),
               panel.background = element_blank())+
    					 theme(legend.position="bottom") +
-  scale_fill_brewer(name="Soy Production, %GDP",palette = "Reds",labels=c("<1","<2","<3","<6","<9","<16","<26"))
+  scale_fill_brewer(name="Soy Sales, USD:", palette="Reds", labels=c("none","<25st pctl","< median","< 75 pctl","> 75 pctl")) +guides(fill=guide_legend(nrow=2, title.position="top"))
 
-p
+p +coord_map("albers",lat0=39, lat1=45)
 
-#Curved map:
-trumpilot$soy_scale<-0
-trumpilot$soy_scale[trumpilot$soyval12<1]<-1
-trumpilot$soy_scale[trumpilot$soyval12>=1 & trumpilot$soyval12<2]<-2
-trumpilot$soy_scale[trumpilot$soyval12>=2 & trumpilot$soyval12<3]<-3
-trumpilot$soy_scale[trumpilot$soyval12>=3 & trumpilot$soyval12<6]<-6
-trumpilot$soy_scale[trumpilot$soyval12>=6 & trumpilot$soyval12<9]<-9
-trumpilot$soy_scale[trumpilot$soyval12>=9 & trumpilot$soyval12<16]<-16
-trumpilot$soy_scale[trumpilot$soyval12>=16 ]<-26
-trumpilot$soy_scale<-factor(trumpilot$soy_scale, ordered=TRUE)
-mapdata<- trumpilot %>% select(fips=FIPS, soy_scale) %>% mutate(fips=as.character(str_pad(fips, 5, pad = "0")))
+ggsave("soybean_map1.pdf")
 
 
 
-p <- plot_usmap(region="counties", data=mapdata, values="soy_scale")+
-  scale_fill_brewer(name="Soy Production, %GDP",palette = "Reds",labels=c("<1","<2","<3","<6","<9","<16","<26"))+
-   					 theme(legend.position="bottom")+guides(fill=guide_legend( title.position="top"))
 
-p
+#Production, bushels:
+mydata$soy_scale1<-0
+mydata$soy_scale1[mydata$prod_bush>=62 & mydata$prod_bush<105242]<-1
+mydata$soy_scale1[mydata$prod_bush>=105242 & mydata$prod_bush<703941]<-2
+mydata$soy_scale1[mydata$prod_bush>=703941 & mydata$prod_bush<2339635]<-3
+mydata$soy_scale1[mydata$prod_bush>=2339635 ]<-4
+mydata$soy_scale1<-factor(mydata$soy_scale1, ordered=TRUE)
 
-ggsave("map_soy_curved.pdf")
+p <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=soy_scale1),color="gray",  size=.0001) +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_brewer(name="Soy Production, bushels:", palette="Reds", labels=c("none","<25st pctl","< median","< 75 pctl","> 75 pctl")) +guides(fill=guide_legend(nrow=2, title.position="top"))
+
+p +coord_map("albers",lat0=39, lat1=45)
+
+ggsave("soybean_map2.pdf")
+
+#Harvested, acres:
+mydata$soy_scale2<-0
+mydata$soy_scale2[mydata$soyarea>=6 & mydata$soyarea<2959]<-1
+mydata$soy_scale2[mydata$soyarea>=2959 & mydata$soyarea<18925]<-2
+mydata$soy_scale2[mydata$soyarea>=18925 & mydata$soyarea<66223]<-3
+mydata$soy_scale2[mydata$soyarea>=66223 ]<-4
+mydata$soy_scale2<-factor(mydata$soy_scale2, ordered=TRUE)
+
+p <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=soy_scale2),color="gray",  size=.0001) +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_brewer(name="Soy Area, acres:", palette="Reds", labels=c("none","<25st pctl","< median","< 75 pctl","> 75 pctl")) +guides(fill=guide_legend(nrow=2, title.position="top"))
+
+p +coord_map("albers",lat0=39, lat1=45)
+
+ggsave("soybean_map3.pdf")
+
+#Sales as a percent of GDP
+mydata$soy_scale3<-0
+mydata$soy_scale3[mydata$soyval12v1>0 & mydata$soyval12v1<0.15876 & !is.na(mydata$soyval12v1)]<-1
+mydata$soy_scale3[mydata$soyval12v1>=0.15876 & mydata$soyval12v1<0.92373 & !is.na(mydata$soyval12v1)]<-2
+mydata$soy_scale3[mydata$soyval12v1>=0.92373 & mydata$soyval12v1<5.03303 & !is.na(mydata$soyval12v1)]<-3
+mydata$soy_scale3[mydata$soyval12v1>=5.03303 & !is.na(mydata$soyval12v1)]<-4
+mydata$soy_scale3<-factor(mydata$soy_scale3, ordered=TRUE)
+
+p <- ggplot() +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=soy_scale3),color="gray",  size=.0001) +
+  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
+  theme(axis.text=element_blank(),
+              axis.ticks=element_blank(),
+              axis.title.x=element_blank(),
+              axis.title.y=element_blank(),
+              panel.grid.major = element_blank(),
+              panel.grid.minor = element_blank(),
+              panel.border = element_blank(),
+              panel.background = element_blank())+
+   					 theme(legend.position="bottom") +
+  scale_fill_brewer(name="Soy Sales,% GDP:", palette="Reds", labels=c("none","<25st pctl","< median","< 75 pctl","> 75 pctl")) +guides(fill=guide_legend(nrow=2, title.position="top"))
+
+p +coord_map("albers",lat0=39, lat1=45)
+
+ggsave("soybean_map4.pdf")
+
 
 ```
 
@@ -176,33 +228,18 @@ Plot change in Rep votes:
 
 ```{r}
 
-mydata$votech[!is.finite(mydata$votech)]<-0
+mydata$votech2<-NA
+mydata$votech2[exp(mydata$votech)<0.9]<-1
+mydata$votech2[exp(mydata$votech)>=0.9 & exp(mydata$votech)<.95]<-2
+mydata$votech2[exp(mydata$votech)>=0.95 & exp(mydata$votech)<.99]<-3
+mydata$votech2[exp(mydata$votech)>=0.99 & exp(mydata$votech)<1]<-4
+mydata$votech2[exp(mydata$votech)==1  ]<-5
+mydata$votech2[exp(mydata$votech)>1 & exp(mydata$votech)<1.01]<-6
+mydata$votech2[exp(mydata$votech)>=1.01 & exp(mydata$votech)<1.05]<-7
+mydata$votech2[exp(mydata$votech)>=1.05 & exp(mydata$votech)<1.1]<-8
+mydata$votech2[exp(mydata$votech)>=1.1 ]<-9
+mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
 
-mydata$votech1<-NA
-mydata$votech1[mydata$votech<(-1)]<-1
-mydata$votech1[mydata$votech>=(-1) & mydata$votech<(-.5) ]<-2
-mydata$votech1[mydata$votech>=(-.5) & mydata$votech<(0) ]<-3
-mydata$votech1[mydata$votech==0  ]<-4
-mydata$votech1[mydata$votech>0 & mydata$votech<.5]<-5
-mydata$votech1[mydata$votech>=0.5 & mydata$votech<1]<-6
-mydata$votech1[mydata$votech>=1]<-7
-mydata$votech1<-factor(mydata$votech1, ordered=TRUE)
-
-p1 <- ggplot() +
-  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=votech1), colour="gray") +
-  geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
-  theme(axis.text=element_blank(),
-              axis.ticks=element_blank(),
-              axis.title.x=element_blank(),
-              axis.title.y=element_blank(),
-              panel.grid.major = element_blank(),
-              panel.grid.minor = element_blank(),
-              panel.border = element_blank(),
-              panel.background = element_blank())+
-   					 theme(legend.position="bottom") +
-  scale_fill_brewer(name="Vote Change", palette="RdBu", direction=-1,labels=c("<-1","<-0.5","<0","0 or missing","<0.5","<1",">1"))
-
-p1
 
 
 
@@ -220,47 +257,52 @@ p1 <- ggplot() +
    					 theme(legend.position="bottom") +
   scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(nrow=3, title.position="top"))
 
-p1
+p1+coord_map("albers",lat0=39, lat1=45)
 
 
-
-mydata$votech2<-NA
-mydata$votech2[exp(mydata$votech)<0.9]<-1
-mydata$votech2[exp(mydata$votech)>=0.9 & exp(mydata$votech)<.95]<-2
-mydata$votech2[exp(mydata$votech)>=0.95 & exp(mydata$votech)<.99]<-3
-mydata$votech2[exp(mydata$votech)>=0.99 & exp(mydata$votech)<1]<-4
-mydata$votech2[exp(mydata$votech)==1  ]<-5
-mydata$votech2[exp(mydata$votech)>1 & exp(mydata$votech)<1.01]<-6
-mydata$votech2[exp(mydata$votech)>=1.01 & exp(mydata$votech)<1.05]<-7
-mydata$votech2[exp(mydata$votech)>=1.05 & exp(mydata$votech)<1.1]<-8
-mydata$votech2[exp(mydata$votech)>=1.1 ]<-9
-mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
-
-
-
-#Curved map
-trumpilot$votech2<-NA
-
-trumpilot$votech2[exp(trumpilot$votech)<0.9]<-1
-trumpilot$votech2[exp(trumpilot$votech)>=0.9 & exp(trumpilot$votech)<.95]<-2
-trumpilot$votech2[exp(trumpilot$votech)>=0.95 & exp(trumpilot$votech)<.99]<-3
-trumpilot$votech2[exp(trumpilot$votech)>=0.99 & exp(trumpilot$votech)<1]<-4
-trumpilot$votech2[exp(trumpilot$votech)==1  ]<-5
-trumpilot$votech2[exp(trumpilot$votech)>1 & exp(trumpilot$votech)<1.01]<-6
-trumpilot$votech2[exp(trumpilot$votech)>=1.01 & exp(trumpilot$votech)<1.05]<-7
-trumpilot$votech2[exp(trumpilot$votech)>=1.05 & exp(trumpilot$votech)<1.1]<-8
-trumpilot$votech2[exp(trumpilot$votech)>=1.1 ]<-9
-trumpilot$votech2<-factor(trumpilot$votech2, ordered=TRUE)
-mapdata1<- trumpilot %>% select(fips=FIPS, votech2) %>% mutate(fips=as.character(str_pad(fips, 5, pad = "0")))
-
-
-p <- plot_usmap(region="counties", data=mapdata1, values="votech2")+
-  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9),labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +
-   					 theme(legend.position="bottom")+guides(fill=guide_legend( title.position="top"))
 
 ggsave("map_votech.pdf")
 
 
 ```
+Scatterplots:
+```{r}
+#Sales, USD:
+#Set theme options:
+library(scales)
+library(ggrepel)
 
+theme_set(theme_grey() + theme(panel.background = element_rect(fill = NA, color = 'black'))+ theme(axis.text=element_text(size=10),
+					axis.title=element_text(size=12,face="bold")))
+
+
+trumpilot$mylabel<-trumpilot$state
+trumpilot$mylabel[trumpilot$sales_USD<100000000]<-""
+p<-ggplot(data=filter(trumpilot, is.finite(votech) & sales_USD>0), aes(x=sales_USD/1000000, y=exp(votech), label=mylabel))+geom_point()+
+                geom_text_repel()+
+							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged") + scale_x_continuous("Soy Sales, millions USD")
+p
+
+#Bushels:
+trumpilot$mylabel<-trumpilot$state
+trumpilot$mylabel[trumpilot$prod_bush<10000000]<-""
+p<-ggplot(data=filter(trumpilot, is.finite(votech) & prod_bush>0), aes(x=prod_bush/1000000, y=votech, label=mylabel))+geom_point()+
+                geom_text_repel()+
+							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged", limits=c(-1,1)) + scale_x_continuous("Soy Sales, millions USD")
+p
+
+#Acres,
+trumpilot$mylabel<-trumpilot$state
+trumpilot$mylabel[trumpilot$soyarea<2]<-""
+p<-ggplot(data=filter(trumpilot, is.finite(votech) & soyarea>0), aes(x=soyarea/100000, y=votech, label=mylabel))+geom_point()+
+                geom_text_repel()+
+							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged", limits=c(-1,1)) + scale_x_continuous("Soy Area, 100 thousand acres")
+p
+
+#Sales, % GDP:
+ggplot(data=trumpilot[is.finite(trumpilot$votech),], aes(x=log(soyval12v1+1), y=votech))+geom_point()+
+							 geom_smooth(method=lm) +ylim(c(-2.5, 2.5))
+
+
+```
 
