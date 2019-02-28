@@ -184,17 +184,56 @@ gdp$county[ind]<-str_replace(gdp$county[ind]," \\(Independent City\\)"," city")
 
 gdp$county[-ind]<-paste0(gdp$county[-ind]," county")
 gdp$county[gdp$state=="LA"]<-str_replace(gdp$county[gdp$state=="LA"],"county","parish")
+gdp<-gdp %>% mutate(county=tolower(county))
 gdp$county[gdp$county=="maui + kalawao county"]<-"maui county"
 gdp$county[gdp$county=="fremont (includes yellowstone park) county"]<-"fremont county"
 gdp$county[gdp$county=="lasalle parish"]<-"la salle parish"
 gdp$county[gdp$county=="carson city city"]<-"carson city"
 gdp$county[gdp$county=="doña ana county"]<-"dona ana county"
+gdp$county[gdp$county=="albemarle + charlottesville county"]<-"albemarle county"
+gdp$county[gdp$county=="alleghany + covington county"]<-"alleghany county"
+gdp$county[gdp$county=="augusta, staunton + waynesboro county"]<-"augusta county"
+gdp$county[gdp$county=="campbell + lynchburg county"]<-"campbell county"
+gdp$county[gdp$county=="carroll + galax county"]<-"carroll county"
+gdp$county[gdp$county=="charles city"]<-"charles city county"
+gdp$county[gdp$county=="dinwiddie, colonial heights + petersburg county"]<-"dinwiddie county"
+gdp$county[gdp$county=="fairfax, fairfax city + falls church"]<-"fairfax county"
+gdp$county[gdp$county=="frederick + winchester county"]<-"frederick county"
+gdp$county[gdp$county=="greensville + emporia county"]<-"greensville county"
+gdp$county[gdp$county=="henry + martinsville county"]<-"henry county"
+gdp$county[gdp$county=="james city + williamsburg"]<-"james city county"
+gdp$county[gdp$county=="montgomery + radford county"]<-"montgomery county"
+gdp$county[gdp$county=="pittsylvania + danville county"]<-"pittsylvania county"
+gdp$county[gdp$county=="prince george + hopewell county"]<-"prince george county"
+gdp$county[gdp$county=="prince william, manassas + manassas park county"]<-"prince william county"
+gdp$county[gdp$county=="roanoke + salem county"]<-"roanoke county"
+
+gdp$county[gdp$county=="rockbridge, buena vista + lexington county"]<-"rockbridge county"
+gdp$county[gdp$county=="rockingham + harrisonburg county"]<-"rockingham county"
+gdp$county[gdp$county=="southampton + franklin county"]<-"southampton county"
+gdp$county[gdp$county=="spotsylvania + fredericksburg county"]<-"spotsylvania county"
+gdp$county[gdp$county=="washington + bristol county"]<-"washington county"
+gdp$county[gdp$county=="wise + norton county"]<-"wise county"
+gdp$county[gdp$county=="york + poquoson county"]<-"york county"
 
 
 
-gdp<-gdp %>% mutate(county=tolower(county))
+
+
+
 
 allstates<-left_join(allstates, gdp, by=c("state","county"))
+
+
+```
+
+
+State-level GDP:
+```{r}
+gdpS<-read.csv("GDPstate0219.csv", header = TRUE, skip=4)
+
+gdpS<-gdpS[1:(nrow(gdpS)-1),] %>% select(state_name=X, stateGDP=X.1) %>% mutate(stateGDP=str_remove_all(stateGDP, "\\,")) %>% mutate(stateGDP=as.numeric(as.character(stateGDP)))
+allstates<-left_join(allstates, gdpS, by="state_name")
 
 
 ```
