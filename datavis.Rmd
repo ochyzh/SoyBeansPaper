@@ -278,30 +278,40 @@ theme_set(theme_grey() + theme(panel.background = element_rect(fill = NA, color 
 
 trumpilot$mylabel<-trumpilot$state
 trumpilot$mylabel[trumpilot$sales_USD<100000000]<-""
-p<-ggplot(data=filter(trumpilot, is.finite(votech) & sales_USD>0), aes(x=sales_USD/1000000, y=exp(votech), label=mylabel))+geom_point()+
+p<-ggplot(data=filter(trumpilot, is.finite(votech) & sales_USD>0), aes(x=sales_USD/1000000, y=votech, label=mylabel))+geom_point()+
                 geom_text_repel()+
-							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged") + scale_x_continuous("Soy Sales, millions USD")
+							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged", limits=c(-1,1)) + scale_x_continuous("Soy Sales, millions USD")
 p
+
+ggsave("sales_scatter.pdf")
 
 #Bushels:
 trumpilot$mylabel<-trumpilot$state
 trumpilot$mylabel[trumpilot$prod_bush<10000000]<-""
 p<-ggplot(data=filter(trumpilot, is.finite(votech) & prod_bush>0), aes(x=prod_bush/1000000, y=votech, label=mylabel))+geom_point()+
                 geom_text_repel()+
-							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged", limits=c(-1,1)) + scale_x_continuous("Soy Sales, millions USD")
+							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged", limits=c(-1,1)) + scale_x_continuous("Soy Production, millions of bushels")
 p
+ggsave("bushels_scatter.pdf")
 
 #Acres,
 trumpilot$mylabel<-trumpilot$state
-trumpilot$mylabel[trumpilot$soyarea<2]<-""
+trumpilot$mylabel[trumpilot$soyarea<200000]<-""
 p<-ggplot(data=filter(trumpilot, is.finite(votech) & soyarea>0), aes(x=soyarea/100000, y=votech, label=mylabel))+geom_point()+
                 geom_text_repel()+
 							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged", limits=c(-1,1)) + scale_x_continuous("Soy Area, 100 thousand acres")
 p
+ggsave("area_scatter.pdf")
 
 #Sales, % GDP:
-ggplot(data=trumpilot[is.finite(trumpilot$votech),], aes(x=log(soyval12v1+1), y=votech))+geom_point()+
-							 geom_smooth(method=lm) +ylim(c(-2.5, 2.5))
+trumpilot$mylabel<-trumpilot$state
+trumpilot$mylabel[trumpilot$soyval12v1<25]<-""
+p<-ggplot(data=filter(trumpilot, is.finite(votech) & soyval12v1>0), aes(x=soyval12v1, y=votech, label=mylabel))+geom_point()+
+              geom_text_repel()+
+							 geom_smooth(method=lm) +scale_y_continuous("Vote Change, logged",  limits=c(-1,1)) + scale_x_continuous("Soy Sales, % GDP")
+p
+
+ggsave("salesGDP_scatter.pdf")
 
 
 ```
