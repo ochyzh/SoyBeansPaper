@@ -21,7 +21,7 @@ library(lubridate)
 library(leaflet)
 library(tidyverse)
 library(magrittr)
-library(usmap)
+#library(usmap)
 library(mapproj)
 
 ```
@@ -32,7 +32,7 @@ Open the data:
 rm(list=ls())
 trumpilot<-read.csv("soydata.csv", header=TRUE)
 ## Generate measure of vote shift
-trumpilot$votech <- with(trumpilot, log(Rep18*Dem16/(Rep16*Dem18)))
+trumpilot$votech <- with(trumpilot, log(as.numeric(Rep18)*as.numeric(Dem16)/(as.numeric(Rep16)*as.numeric(Dem18))))
 #trumpilot<-subset(trumpilot, is.finite(votech)) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
 
 ## Generate state variable for state fixed effects
@@ -228,7 +228,7 @@ Plot change in Rep votes:
 
 ```{r}
 
-mydata$votech2<-NA
+mydata$votech2<-5
 mydata$votech2[exp(mydata$votech)<0.9]<-1
 mydata$votech2[exp(mydata$votech)>=0.9 & exp(mydata$votech)<.95]<-2
 mydata$votech2[exp(mydata$votech)>=0.95 & exp(mydata$votech)<.99]<-3
@@ -244,7 +244,7 @@ mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
 
 
 p1 <- ggplot() +
-  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=votech2), colour="gray") +
+  geom_polygon(data=mydata, aes(x=long, y=lat, group=group, fill=votech2), size=.001,colour="gray") +
   geom_path(data=states, aes(x=long, y=lat, group=group), color="black")+
   theme(axis.text=element_blank(),
               axis.ticks=element_blank(),
@@ -255,7 +255,7 @@ p1 <- ggplot() +
               panel.border = element_blank(),
               panel.background = element_blank())+
    					 theme(legend.position="bottom") +
-  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(nrow=3, title.position="top"))
+  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9),labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(nrow=3, title.position="top"))
 
 p1+coord_map("albers",lat0=39, lat1=45)
 
