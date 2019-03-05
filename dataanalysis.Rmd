@@ -10,6 +10,14 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
 ```
 
+Libraries:
+```{r}
+library(tidyverse)
+library(magrittr)
+library(lme4)
+library(xtable)
+```
+
 ```{r}
 rm(list=ls())
 trumpilot<-read.csv("soydata.csv", header=TRUE)
@@ -124,15 +132,14 @@ summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + soyva
 
 Centering all variables:
 ```{r}
-library(tidyverse)
-library(magrittr)
+
 center<-function(myvar){
   (myvar-mean(myvar, na.rm=TRUE))
 }
 
 tr_cr<-trumpilot %>% 
-  select(sales_USD,soyval,soyarea,prod_bush, GDP2015, stateGDP, medinc1317,perc_HS_GED, totpop1317,urb2010,perclatino1317,trumpmarg)  %>% 
-  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perclatino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,sales_USD=sales_USD/100000, soyarea=soyarea/640,prod_bush=prod_bush/1000000, ln_sales_USD=log(sales_USD/100000+1), ln_soyval=log(soyval+1), ln_soyarea=log(soyarea/640+1), ln_prod_bush=log(prod_bush+1)) 
+  select(sales_USD,soyval,soyarea,prod_bush, GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,trumpmarg)  %>% 
+  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perclatino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,sales_USD=sales_USD/100000, soyarea=soyarea/640,prod_bush=prod_bush/1000000, ln_sales_USD=log(sales_USD/100000+1), ln_soyval=log(soyval+1), ln_soyarea=log(soyarea/640+1), ln_prod_bush=log(prod_bush+1)) 
 
 tr_cr<-do.call(cbind,lapply(tr_cr,center))
 newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
@@ -146,14 +153,17 @@ trumpilot1<-cbind.data.frame(subset(trumpilot, select=c("statefips","state","cou
 
 Multi-level models:
 ```{r}
-library(lme4)
+
 ## All counties, predicted using bushels:
 summary(m1_full<-lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
 summary(m2_full<-lmer(data = trumpilot1, votech ~ ln_soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
 
+summary(lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+perc_BA_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
+
 
 summary(lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
 summary(lmer(data = trumpilot1, votech ~ ln_soyarea_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
+
 
 ```
 

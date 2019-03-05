@@ -92,23 +92,34 @@ Census control variables:
 #B01003_001--total polulation
 #B02001_002 --white population
 #B03001_003 --Hispanic or Latino
+#B02001_003 --black
+#B99051_005--foreign born
+#B99051_001--allocation of citizenship total
 #B19013_001 --median income
+#B23025_001--employment total
+#B23025_007--not in labor force
 #C16010_011--high school graduate
 #C16010_001--total (to divide high school grads by)
 #get_decennial(geography="state", variables=c("C16010_011","C16010_001"))
 
-income_latino<-get_acs(geography="county", variables=c("B01003_001","B02001_002","B03001_003","B19013_001"))
+income_latino<-get_acs(geography="county", variables=c("B01003_001","B02001_002","B03001_003","B19013_001","B02001_003","B23025_007","B23025_001","B99051_005","B99051_001"))
 income_latino$variable[income_latino$variable=="B01003_001"]<-"totpop1317"
 income_latino$variable[income_latino$variable=="B02001_002"]<-"whitepop1317"
 income_latino$variable[income_latino$variable=="B03001_003"]<-"latinopop1317"
 income_latino$variable[income_latino$variable=="B19013_001"]<-"medinc1317"
+income_latino$variable[income_latino$variable=="B02001_003"]<-"black1317"
+income_latino$variable[income_latino$variable=="B23025_007"]<-"unemploy1317"
+income_latino$variable[income_latino$variable=="B23025_001"]<-"employtot"
+income_latino$variable[income_latino$variable=="B99051_005"]<-"foreign1317"
+income_latino$variable[income_latino$variable=="B99051_001"]<-"citizentot"
 
 income_latino<-income_latino %>% 
   select(NAME, variable, estimate) %>%
   separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
   spread(variable, estimate) %>%
-mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317) %>%
-  select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317)
+mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317, percblack1317=black1317/totpop1317, perc_unemploy1317=unemploy1317/employtot,
+      perc_foreign1317=foreign1317/citizentot) %>%
+  select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317,percblack1317,perc_unemploy1317,perc_foreign1317)
 income_latino$county[income_latino$county=="Doña Ana County"]<-"Dona Ana County"
 income_latino$county[income_latino$county=="LaSalle Parish"]<-"La Salle Parish"
 
@@ -142,10 +153,12 @@ allstates<-left_join(allstates, pop, by=c("state_name","county"))
 #Educational attainment:
 educ<-read_csv("ACS_17_5YR_B15003_with_ann.csv", col_names = TRUE)
 educ<-educ[2:nrow(educ),]
-educ<-educ %>% select(NAME=`GEO.display-label`,tot=HD01_VD01,HS=HD01_VD17, GED=HD01_VD18) %>% 
+educ<-educ %>% select(NAME=`GEO.display-label`,tot=HD01_VD01,HS=HD01_VD17, GED=HD01_VD18, BA=HD01_VD22
+) %>% 
   separate(NAME,c("county","state_name"), sep=", ", fill="right") %>%
-  mutate(HS=as.numeric(HS),GED=as.numeric(GED), tot=as.numeric(tot)) %>%
-  mutate(perc_HS_GED=(HS+GED)/tot) %>% select(county, state_name, perc_HS_GED)
+  mutate(HS=as.numeric(HS),GED=as.numeric(GED), tot=as.numeric(tot), BA=as.numeric(BA)) %>%
+  mutate(perc_HS_GED=(HS+GED)/tot, perc_BA=BA/tot) %>% select(county, state_name, perc_HS_GED,perc_BA)
+
 educ$county[educ$county=="Do<f1>a Ana County"]<-"Dona Ana County"
 educ$county[educ$county=="LaSalle Parish"]<-"La Salle Parish"
 
