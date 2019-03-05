@@ -10,6 +10,13 @@ editor_options:
 knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
 ```
 
+Libraries:
+```{r}
+library(tidyverse)
+library(magrittr)
+library(lme4)
+```
+
 ```{r}
 rm(list=ls())
 trumpilot<-read.csv("soydata.csv", header=TRUE)
@@ -124,8 +131,7 @@ summary(lm(data = trumpilot[trumpilot$Splitflag==0,], votech ~ statefips + soyva
 
 Centering all variables:
 ```{r}
-library(tidyverse)
-library(magrittr)
+
 center<-function(myvar){
   (myvar-mean(myvar, na.rm=TRUE))
 }
@@ -146,7 +152,7 @@ trumpilot1<-cbind.data.frame(subset(trumpilot, select=c("statefips","state","cou
 
 Multi-level models:
 ```{r}
-library(lme4)
+
 ## All counties, predicted using bushels:
 summary(m1_full<-lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
 summary(m2_full<-lmer(data = trumpilot1, votech ~ ln_soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))

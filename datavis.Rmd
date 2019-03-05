@@ -254,14 +254,15 @@ p1 <- ggplot() +
               panel.grid.minor = element_blank(),
               panel.border = element_blank(),
               panel.background = element_blank())+
-   					 theme(legend.position="bottom") +
-  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9),labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(nrow=3, title.position="top"))
+   					 theme(legend.position=c(.2,.0),legend.text = element_text(size=7),
+               legend.box = "vertical") +
+  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9),labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(ncol=3, title.position="top"))
 
 p1+coord_map("albers",lat0=39, lat1=45)
 
 
 
-ggsave("map_votech.pdf")
+ggsave("map_votech.pdf", width=6.5, units="in")
 
 
 ```
