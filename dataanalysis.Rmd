@@ -148,8 +148,8 @@ Multi-level models:
 ```{r}
 library(lme4)
 ## All counties, predicted using bushels:
-summary(mlm<-lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
-summary(lmer(data = trumpilot1, votech ~ ln_soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
+summary(m1_full<-lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
+summary(m2_full<-lmer(data = trumpilot1, votech ~ ln_soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
 
 
 summary(lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
@@ -183,7 +183,7 @@ trumpilot2<-cbind.data.frame(subset(trumpilot[trumpilot$Splitflag==0,], select=c
 ```{r}
 ##Counties not split between House districts, predicted using percent of county GDP from soybeans
 summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
-summary(lmer(data = trumpilot2, votech ~ soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
+summary(m2<-lmer(data = trumpilot2, votech ~ soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
 
 summary(lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
 summary(lmer(data = trumpilot2, votech ~ ln_soyarea_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
@@ -198,11 +198,11 @@ State and district ranefs:
 trumpilot2<-trumpilot2 %>% mutate(dist_state=as.factor(paste0(state,Dist)))
 
 ##Counties not split between House districts
-summary(lmer(data = trumpilot2, votech_cr ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+ (1 | dist_state)))
-summary(lmer(data = trumpilot2, votech_cr ~ ln_soyval_cr +ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+ (1 | dist_state)))
+summary(lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+ (1 | dist_state)))
+summary(lmer(data = trumpilot2, votech ~ ln_soyval_cr +ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+ (1 | dist_state)))
 
-summary(mlm<-lmer(data = trumpilot2, votech_cr ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr +   (1 | statefips)+(1 | dist_state)))
-summary(mlm<-lmer(data = trumpilot2, votech_cr ~ ln_soyarea_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+(1 | dist_state)))
+summary(lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr +   (1 | statefips)+(1 | dist_state)))
+summary(lmer(data = trumpilot2, votech ~ ln_soyarea_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)+(1 | dist_state)))
 
 
 ```
@@ -211,6 +211,10 @@ Plot Effects:
 coef(m1) #coef calculates state-specific intercepts as re+fe
 fixef(m1) #main (average) effects
 ranef(m1) #Random (state-level) intercepts
+theme_set(theme_grey() + theme(panel.background = element_rect(fill = NA, color = 'black'))+ theme(axis.text=element_text(size=10),
+					axis.title=element_text(size=12,face="bold")))
+
+
 
 ln_prod_bush=seq(min(log(trumpilot$prod_bush+1), na.rm=TRUE),max(log(trumpilot$prod_bush+1), na.rm=TRUE), by=.1)
 mycoef<-as.matrix(fixef(m1)[1:2])
@@ -219,9 +223,11 @@ mycov<-vcov(m1)
 yhat<-cbind(1,ln_prod_bush)%*%mycoef
 se_yhat<-sqrt(mycov[1,1]+(ln_prod_bush^2)*mycov[2,2]+2*ln_prod_bush*mycov[1,2])
 
+mylabel<-1-yhat
 
-p<-ggplot()+geom_line(aes(x=(exp(ln_prod_bush)-1),y=exp(yhat)))+geom_ribbon(aes(x=(exp(ln_prod_bush)-1), ymin=exp(yhat-2*se_yhat),ymax=exp(yhat+2*se_yhat)), alpha=.1)
-p
+p<-ggplot()+geom_line(aes(x=(exp(ln_prod_bush))/1000,y=exp(yhat)))+geom_ribbon(aes(x=(exp(ln_prod_bush))/1000, ymin=exp(yhat-2*se_yhat),ymax=exp(yhat+2*se_yhat)), alpha=.1) 
+p + scale_y_continuous("Expected Change in Republican Vote Share, %", limits=c(0,1), breaks=seq(.1,1,.1), labels=seq(-100,-10,10))+scale_x_log10("Soy Production, Thousands of Bushels", breaks=c(0.01,1,100,10000), labels=c("0.01","1","100","10000"))
+ggsave("fitted.pdf")
 
 
 ```
