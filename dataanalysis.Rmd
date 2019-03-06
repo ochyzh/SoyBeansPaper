@@ -15,7 +15,10 @@ Libraries:
 library(tidyverse)
 library(magrittr)
 library(lme4)
+<<<<<<< HEAD
 library(xtable)
+=======
+>>>>>>> 723efc59d4eb30fc945011f3cd1804b1278b13c4
 ```
 
 ```{r}
