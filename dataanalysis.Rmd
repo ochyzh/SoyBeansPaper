@@ -166,6 +166,7 @@ summary(lmer(data = trumpilot1, votech ~ ln_soyarea_cr + ln_GDP2015_cr+perc_unem
 
 
 #More controls
+
 summary(m1_full<-lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+percblack1317_cr+perclatino1317_cr+perc_other_cr+perc_foreign1317_cr+trumpmarg_cr + (1  | statefips)))
 
 summary(m2_full<-lmer(data = trumpilot1, votech ~ ln_soyval_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+percblack1317_cr+perclatino1317_cr+perc_other_cr+perc_foreign1317_cr+trumpmarg_cr + (1  | statefips)))
