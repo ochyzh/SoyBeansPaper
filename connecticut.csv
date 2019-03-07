@@ -1,0 +1,9 @@
+FIPS,state,county,state_code,state_name,county_code,Dem16,Rep16,Dem18,Rep18,Dist,Splitflag
+9001,CT,fairfield county,9,Connecticut,1,242436,159862,213102,137098,3,1
+9003,CT,hartford county,9,Connecticut,3,249132,131433,216538,118758,1,1
+9005,CT,litchfield county,9,Connecticut,5,47550,45809,41280,42334,1,1
+9007,CT,middlesex county,9,Connecticut,7,52948,31134,47044,29973,1,1
+9009,CT,new haven county,9,Connecticut,9,240630,122020,197520,120797,2,1
+9011,CT,new london county,9,Connecticut,11,81108,34946,70247,33542,2,0
+9013,CT,tolland county,9,Connecticut,13,46644,25878,39434,21933,2,0
+9015,CT,windham county,9,Connecticut,15,29691,17052,24176,16086,2,0
