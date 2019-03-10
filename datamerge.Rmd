@@ -99,6 +99,11 @@ Census control variables:
 #B02001_002 --white population
 #B03001_003 --Hispanic or Latino
 #B02001_003 --black
+#B02001_004--american indian
+#B02001_005--asian
+#B02001_006 --Hawaiian or Pacific islander
+#B02001_007--some other race alone
+#B02001_008 --two or more races
 #B99051_005--foreign born
 #B99051_001--allocation of citizenship total
 #B19013_001 --median income
@@ -108,12 +113,17 @@ Census control variables:
 #C16010_001--total (to divide high school grads by)
 #get_decennial(geography="state", variables=c("C16010_011","C16010_001"))
 
-income_latino<-get_acs(geography="county", variables=c("B01003_001","B02001_002","B03001_003","B19013_001","B02001_003","B23025_007","B23025_001","B99051_005","B99051_001"))
+income_latino<-get_acs(geography="county", variables=c("B01003_001","B02001_002","B03001_003","B19013_001","B02001_003","B02001_004","B02001_005","B02001_006","B02001_007","B02001_008","B23025_007","B23025_001","B99051_005","B99051_001"))
 income_latino$variable[income_latino$variable=="B01003_001"]<-"totpop1317"
 income_latino$variable[income_latino$variable=="B02001_002"]<-"whitepop1317"
 income_latino$variable[income_latino$variable=="B03001_003"]<-"latinopop1317"
 income_latino$variable[income_latino$variable=="B19013_001"]<-"medinc1317"
 income_latino$variable[income_latino$variable=="B02001_003"]<-"black1317"
+income_latino$variable[income_latino$variable=="B02001_004"]<-"amerind1317"
+income_latino$variable[income_latino$variable=="B02001_005"]<-"asian1317"
+income_latino$variable[income_latino$variable=="B02001_006"]<-"hawaiian1317"
+income_latino$variable[income_latino$variable=="B02001_007"]<-"other1317"
+income_latino$variable[income_latino$variable=="B02001_008"]<-"twoormoreraces1317"
 income_latino$variable[income_latino$variable=="B23025_007"]<-"unemploy1317"
 income_latino$variable[income_latino$variable=="B23025_001"]<-"employtot"
 income_latino$variable[income_latino$variable=="B99051_005"]<-"foreign1317"
@@ -123,9 +133,9 @@ income_latino<-income_latino %>%
   select(NAME, variable, estimate) %>%
   separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
   spread(variable, estimate) %>%
-mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317, percblack1317=black1317/totpop1317, perc_unemploy1317=unemploy1317/employtot,
+mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317, percblack1317=black1317/totpop1317, perc_otherrace=(amerind1317+asian1317+hawaiian1317+other1317+twoormoreraces1317)/totpop1317, perc_unemploy1317=unemploy1317/employtot,
       perc_foreign1317=foreign1317/citizentot) %>%
-  select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317,percblack1317,perc_unemploy1317,perc_foreign1317)
+  select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317,percblack1317,perc_otherrace,perc_unemploy1317,perc_foreign1317)
 income_latino$county[income_latino$county=="Doña Ana County"]<-"Dona Ana County"
 income_latino$county[income_latino$county=="LaSalle Parish"]<-"La Salle Parish"
 
@@ -281,7 +291,20 @@ allstates$soyarea[is.na(allstates$soyarea)]<-0
 allstates$prod_bush[is.na(allstates$prod_bush)]<-0
 allstates$sales_USD[is.na(allstates$sales_USD)]<-0
 
-write.csv(allstates, "soydata.csv", row.names=FALSE)
 
+
+```
+
+Add ditrict-level data:
+
+```{r}
+dist<-read_csv("districts.csv", col_names = TRUE)
+names(dist)<-c(names(dist)[1],"state_name","Dist",names(dist)[4:7])
+
+
+allstates$Dist[allstates$state_name %in% c("Alaska", "Delaware","Montana","North Dakota", "South Dakota", "Vermont","Wyoming")]<-0
+allstates<-left_join(allstates, dist, by=c("state_name","Dist"))
+
+write.csv(allstates, "soydata.csv", row.names=FALSE)
 ```
 
