@@ -281,7 +281,17 @@ allstates$soyarea[is.na(allstates$soyarea)]<-0
 allstates$prod_bush[is.na(allstates$prod_bush)]<-0
 allstates$sales_USD[is.na(allstates$sales_USD)]<-0
 
-write.csv(allstates, "soydata.csv", row.names=FALSE)
 
+
+```
+
+Add ditrict-level data:
+
+```{r}
+dist<-read_csv("districts.csv", col_names = TRUE)
+
+left_join(allstates, dist, )
+
+write.csv(allstates, "soydata.csv", row.names=FALSE)
 ```
 
