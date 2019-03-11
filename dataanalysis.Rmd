@@ -283,12 +283,11 @@ ln_gdpc_sq_cr<-ln_gdpc_cr^2
 perc_unemploy1317_cr<-mean(trumpilot1$perc_unemploy1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
 perc_HS_GED_cr<-mean(trumpilot1$perc_HS_GED_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
 perc_BA_cr<-mean(trumpilot1$perc_BA_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-percblack1317_cr<-mean(trumpilot1$ln_perc_black1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-perclatino1317_cr<-mean(trumpilot1$ln_perc_latino1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-perc_other_cr<-mean(trumpilot1$ln_perc_other_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-perc_foreign1317_cr<-mean(trumpilot1$ln_perc_foreign1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+percblack1317_cr<-mean(trumpilot1$percblack1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perclatino1317_cr<-mean(trumpilot1$perclatino1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_other_cr<-mean(trumpilot1$perc_other_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_foreign1317_cr<-mean(trumpilot1$perc_foreign1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
 trumpmarg_cr<-mean(trumpilot1$trumpmarg_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-
 
 
 
