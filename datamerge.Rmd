@@ -299,11 +299,16 @@ Add ditrict-level data:
 
 ```{r}
 dist<-read_csv("districts.csv", col_names = TRUE)
+<<<<<<< HEAD
 names(dist)<-c(names(dist)[1],"state_name","Dist",names(dist)[4:7])
 
 
 allstates$Dist[allstates$state_name %in% c("Alaska", "Delaware","Montana","North Dakota", "South Dakota", "Vermont","Wyoming")]<-0
 allstates<-left_join(allstates, dist, by=c("state_name","Dist"))
+=======
+
+left_join(allstates, dist, )
+>>>>>>> 8151d76e953a296b8608c4bdf3af4e37a71d194b
 
 write.csv(allstates, "soydata.csv", row.names=FALSE)
 ```
