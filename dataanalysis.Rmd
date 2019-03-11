@@ -155,18 +155,7 @@ trumpilot1$ln_gdpc_cu_cr=trumpilot1$ln_gdpc_cr^3
 
 Multi-level models:
 ```{r}
-
-
-
 ## All counties, predicted using bushels:
-summary(lmer(data = trumpilot1, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1  | statefips)))
-summary(lmer(data = trumpilot1, votech ~ ln_soyval_cr +ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr+trumpmarg_cr + (1  | statefips)))
-
-summary(lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_unemploy1317_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perc_blkorlat_cr+trumpmarg_cr + (1  | statefips)))
-summary(lmer(data = trumpilot1, votech ~ ln_soyarea_cr + ln_GDP2015_cr+perc_unemploy1317_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perc_blkorlat_cr+trumpmarg_cr + (1  | statefips)))
-
-
-#More controls
 
 summary(m1_full<-lmer( votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_latino1317_cr+ln_perc_other_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
 
@@ -209,14 +198,6 @@ trumpilot2$ln_gdpc_cu_cr=trumpilot2$ln_gdpc_cr^3
 
 
 ##Counties not split between House districts, predicted using percent of county GDP from soybeans
-summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+(1 | statefips)))
-summary(m2<-lmer(data = trumpilot2, votech ~ soyval_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
-
-summary(lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
-summary(lmer(data = trumpilot2, votech ~ ln_soyarea_cr + ln_GDP2015_cr+perc_HS_GED_cr+ln_pop_cr+urb2010_cr+perclatino1317_cr+trumpmarg_cr + (1 | statefips)))
-
-
-#more controls:
 summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_latino1317_cr+ln_perc_other_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
 summary(m2<-lmer(data = trumpilot2, votech ~ soyval_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_latino1317_cr+ln_perc_other_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
@@ -283,11 +264,12 @@ ln_gdpc_sq_cr<-ln_gdpc_cr^2
 perc_unemploy1317_cr<-mean(trumpilot1$perc_unemploy1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
 perc_HS_GED_cr<-mean(trumpilot1$perc_HS_GED_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
 perc_BA_cr<-mean(trumpilot1$perc_BA_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-percblack1317_cr<-mean(trumpilot1$percblack1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-perclatino1317_cr<-mean(trumpilot1$perclatino1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-perc_other_cr<-mean(trumpilot1$perc_other_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
-perc_foreign1317_cr<-mean(trumpilot1$perc_foreign1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+percblack1317_cr<-mean(trumpilot1$ln_perc_black1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perclatino1317_cr<-mean(trumpilot1$ln_perc_latino1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_other_cr<-mean(trumpilot1$ln_perc_other_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_foreign1317_cr<-mean(trumpilot1$ln_perc_foreign1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
 trumpmarg_cr<-mean(trumpilot1$trumpmarg_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+
 
 
 
