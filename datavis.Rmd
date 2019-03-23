@@ -31,9 +31,12 @@ Open the data:
 ```{r}
 rm(list=ls())
 trumpilot<-read.csv("soydata.csv", header=TRUE)
+
 ## Generate measure of vote shift
-trumpilot$votech <- with(trumpilot, log(as.numeric(Rep18)*as.numeric(Dem16)/(as.numeric(Rep16)*as.numeric(Dem18))))
-#trumpilot<-subset(trumpilot, is.finite(votech)) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
+trumpilot$Rep18perc <- with(trumpilot, as.numeric(Rep18)/(as.numeric(Rep18)+as.numeric(Dem18)))
+trumpilot$Rep16perc <- with(trumpilot, as.numeric(Rep16)/(as.numeric(Rep16)+as.numeric(Dem16)))
+trumpilot$votech <- with(trumpilot, Rep18perc-Rep16perc)
+trumpilot<-subset(trumpilot, is.finite(votech) & Rep18!=0 & Rep16!=0 & Dem18!=0 & Dem16!=0) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
 
 ## Generate state variable for state fixed effects
 trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
@@ -230,16 +233,19 @@ Plot change in Rep votes:
 
 ```{r}
 
-mydata$votech2<-5
-mydata$votech2[exp(mydata$votech)<0.9]<-1
-mydata$votech2[exp(mydata$votech)>=0.9 & exp(mydata$votech)<.95]<-2
-mydata$votech2[exp(mydata$votech)>=0.95 & exp(mydata$votech)<.99]<-3
-mydata$votech2[exp(mydata$votech)>=0.99 & exp(mydata$votech)<1]<-4
-mydata$votech2[exp(mydata$votech)==1  ]<-5
-mydata$votech2[exp(mydata$votech)>1 & exp(mydata$votech)<1.01]<-6
-mydata$votech2[exp(mydata$votech)>=1.01 & exp(mydata$votech)<1.05]<-7
-mydata$votech2[exp(mydata$votech)>=1.05 & exp(mydata$votech)<1.1]<-8
-mydata$votech2[exp(mydata$votech)>=1.1 ]<-9
+mydata$votech2<-NULL
+mydata$votech2[mydata$votech<(-0.3)]<-1
+mydata$votech2[mydata$votech>=(-0.3) & mydata$votech<(-0.2)]<-2
+mydata$votech2[mydata$votech>=(-0.2) & mydata$votech<(-.1)]<-3
+mydata$votech2[mydata$votech>=(-0.1) & mydata$votech<(-.05)]<-4
+mydata$votech2[mydata$votech>=(-.05) & mydata$votech<0  ]<-5
+mydata$votech2[is.na(mydata$votech)==TRUE]<-6
+mydata$votech2[mydata$votech>=0 & mydata$votech<0.05]<-7
+mydata$votech2[mydata$votech>=0.05 & mydata$votech<0.1]<-8
+mydata$votech2[mydata$votech>=.1 & mydata$votech<.2]<-9
+mydata$votech2[mydata$votech>=.2 & mydata$votech<.3]<-10
+mydata$votech2[mydata$votech>=.3 ]<-11
+
 mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
 
 
@@ -258,7 +264,7 @@ p1 <- ggplot() +
               panel.background = element_blank())+
    					 theme(legend.position=c(.2,.0),legend.text = element_text(size=7),
                legend.box = "vertical") +
-  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9),labels=c(">10% Dem",">5% Dem",">1% Dem","<1% Dem","No Change/NA","<1% Rep","<5% Rep","<10% Rep",">10% Rep")) +guides(fill=guide_legend(ncol=3, title.position="top"))
+  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9,10,11),labels=c(">30% Dem",">20% Dem",">10% Dem",">5% Dem","<5% Dem","NA/Unopposed","<1% Rep","<5% Rep","<10% Rep","<20% Rep","30% Rep")) +guides(fill=guide_legend(ncol=3, title.position="top"))
 
 p1+coord_map("albers",lat0=39, lat1=45)
 
@@ -268,20 +274,20 @@ ggsave("map_votech.pdf", width=6.5, units="in")
 
 
 #alt map:
-mydata$votech2<-6
-mydata$votech2[exp(mydata$votech)<0.6]<-1
-mydata$votech2[exp(mydata$votech)>=0.6 & exp(mydata$votech)<.7]<-2
-mydata$votech2[exp(mydata$votech)>=0.7 & exp(mydata$votech)<.8]<-3
-mydata$votech2[exp(mydata$votech)>=0.8 & exp(mydata$votech)<.9]<-4
-mydata$votech2[exp(mydata$votech)>=0.9 & exp(mydata$votech)<1]<-5
-mydata$votech2[exp(mydata$votech)==1  ]<-6
-mydata$votech2[exp(mydata$votech)>1 & exp(mydata$votech)<1.1]<-7
-mydata$votech2[exp(mydata$votech)>=1.1 & exp(mydata$votech)<1.2]<-8
-mydata$votech2[exp(mydata$votech)>=1.2 & exp(mydata$votech)<1.3]<-9
-mydata$votech2[exp(mydata$votech)>=1.3 & exp(mydata$votech)<1.4]<-10
-mydata$votech2[exp(mydata$votech)>=1.4 ]<-11
-mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
+mydata$votech2<-NULL
+mydata$votech2[mydata$votech<(-0.3)]<-1
+mydata$votech2[mydata$votech>=(-0.3) & mydata$votech<(-0.2)]<-2
+mydata$votech2[mydata$votech>=(-0.2) & mydata$votech<(-.1)]<-3
+mydata$votech2[mydata$votech>=(-0.1) & mydata$votech<(-.05)]<-4
+mydata$votech2[mydata$votech>=(-.05) & mydata$votech<0  ]<-5
+mydata$votech2[is.na(mydata$votech)==TRUE]<-6
+mydata$votech2[mydata$votech>=0 & mydata$votech<0.05]<-7
+mydata$votech2[mydata$votech>=0.05 & mydata$votech<0.1]<-8
+mydata$votech2[mydata$votech>=.1 & mydata$votech<.2]<-9
+mydata$votech2[mydata$votech>=.2 & mydata$votech<.3]<-10
+mydata$votech2[mydata$votech>=.3 ]<-11
 
+mydata$votech2<-factor(mydata$votech2, ordered=TRUE)
 
 
 
@@ -297,7 +303,7 @@ p1 <- ggplot() +
               panel.border = element_blank(),
               panel.background = element_blank())+
    					 theme(legend.position=c(.5,-.1),legend.text = element_text(size=7),legend.title = element_text(size=10),legend.key.size = unit(.3, "cm")) +
-  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9,10,11),labels=c(">40% Dem",">30% Dem",">20% Dem",">10% Dem","<10% Dem","No Change/NA","<10% Rep","<20% Rep","<30% Rep","<40% Rep",">40% Rep")) +guides(fill=guide_legend(ncol=3, title.position="top"))
+  scale_fill_brewer(name="Vote Change:", palette="RdBu",direction=-1,breaks=c(1,2,3,4,5,6,7,8,9,10,11),labels=c(">30% Dem",">20% Dem",">10% Dem",">5% Dem","<5% Dem","NA/Unopposed","<1% Rep","<5% Rep","<10% Rep","<20% Rep","30% Rep")) +guides(fill=guide_legend(ncol=3, title.position="top"))
 
 p1+coord_map("albers",lat0=39, lat1=45)
 
