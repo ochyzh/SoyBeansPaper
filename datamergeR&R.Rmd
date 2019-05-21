@@ -1,0 +1,317 @@
+---
+title: "datamerge"
+author: "Olga Chyzh"
+date: "February 12, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
+```
+
+```{r}
+rm(list=ls())
+library(tidycensus)
+#census_api_key("e0261990adaccb7e53c8afb2e20f156263bd5fb7", install=TRUE)
+library(tidyverse)
+library(magrittr)
+library(tools)
+```
+
+
+Merge soy states and non-soy states:
+```{r}
+#Open non-soy states:
+d<-read.csv("nonsoystates.csv", header=TRUE, na.strings = "NA")
+
+#Aggregate by county and create a splitflag var:
+
+
+d<-d %>% 
+  mutate(Dem16=str_remove_all(as.character(Dem16),","), Rep16=str_remove(as.character(Rep16),","),Dem18=str_remove_all(as.character(Dem18),","),Rep18=str_remove_all(as.character(Rep18),",")) %>%
+  mutate(Dem16=as.numeric(Dem16),Rep16=as.numeric(Rep16),Dem18=as.numeric(Dem18),Rep18=as.numeric(Rep18))
+
+d<-na.omit(d) 
+
+d<-d %>%
+  group_by(FIPS) %>% 
+  summarise(state=first(state), county=first(county),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), county_code=as.character(state_code)) %>% 
+  ungroup %>% mutate(county=tolower(county))
+
+conn<-read_csv("connecticut.csv", col_names=TRUE)
+
+d<-rbind(d,conn)
+
+d<-d %>% mutate( soyarea1617=0,soypct=0,soyval12=0, trumpch=(Rep18*Dem16)/(Rep16*Dem18))
+
+#Get corn vars:
+d2<-read_csv("USDAdata.csv", col_names =TRUE)
+d2<-d2 %>% filter(`Data Item`=="CORN - ACRES PLANTED")%>% select(State, County, Value)%>% mutate(Value=str_remove_all(Value,","), county=tolower(County),state_name=State, cornarea1617=as.numeric(Value)) %>% select(county, state_name, cornarea1617)
+
+d2$state_name<-toTitleCase(tolower(d2$state_name))
+
+ind<-setdiff(c(1:nrow(d2)),grep(" City",d2$county,ignore.case =TRUE))
+d2$county[ind]<-paste0(d2$county[ind]," county")
+d2$county<-str_replace(d2$county," City"," city")
+
+d<-left_join(d, d2, by=c("county","state_name") )
+d$cornarea1617[is.na(d$cornarea1617)]<-0
+
+#Get land area:
+land<-read.csv("landarea.csv", header=TRUE) #from 2010 US census
+land<-land %>% select(Areaname,lndarea=LND110210D) %>% mutate(lndarea=as.numeric(as.character(lndarea))*640, Areaname=as.character(Areaname))
+land<-cbind.data.frame(land[,2],str_split_fixed(land$Areaname, pattern=", ", n=2))
+names(land)<-c("lndarea","county","state")
+
+land<-land %>% mutate(county=tolower(as.character(county)), state=as.character(state)) %>% group_by(state, county) %>% summarise(lndarea=max(lndarea))
+
+ind<-setdiff(c(1:nrow(land)),grep(" City",land$county,ignore.case =TRUE))
+land$county[ind]<-paste0(land$county[ind]," county")
+
+d<-left_join(d, land, by=c("state","county"))
+
+d <- d %>% mutate(cornpct=100*cornarea1617/lndarea)
+
+#Open soy states:
+d1<-read.csv("merge1618.csv", header=TRUE) 
+
+#Add state name:
+data(fips_codes)
+fips_codes<-fips_codes %>% 
+  mutate(state_code=gsub("(?<![0-9])0+", "", fips_codes$state_code, perl = TRUE)) %>%
+  mutate(state_code=as.numeric(as.character(state_code)),FIPS=as.integer(as.character(paste(fips_codes$state_code,fips_codes$county_code, sep=""))))
+
+d1<-left_join(d1, fips_codes, by="FIPS")
+d1<- d1 %>% mutate(county=tolower(county))
+
+allstates<-bind_rows(d,d1)
+allstates<-unique(allstates)
+
+```
+
+Census control variables:
+
+```{r}
+#acs1<-load_variables(2017,"acs1",cache=TRUE)
+
+#B01003_001--total polulation
+#B02001_002 --white population
+#B03001_003 --Hispanic or Latino
+#B02001_003 --black
+#B02001_004--american indian
+#B02001_005--asian
+#B02001_006 --Hawaiian or Pacific islander
+#B02001_007--some other race alone
+#B02001_008 --two or more races
+#B99051_005--foreign born
+#B99051_001--allocation of citizenship total
+#B19013_001 --median income
+#B23025_001--employment total
+#B23025_007--not in labor force
+#C16010_011--high school graduate
+#C16010_001--total (to divide high school grads by)
+#get_decennial(geography="state", variables=c("C16010_011","C16010_001"))
+
+income_latino<-get_acs(geography="county", variables=c("B01003_001","B02001_002","B03001_003","B19013_001","B02001_003","B02001_004","B02001_005","B02001_006","B02001_007","B02001_008","B23025_007","B23025_001","B99051_005","B99051_001"))
+income_latino$variable[income_latino$variable=="B01003_001"]<-"totpop1317"
+income_latino$variable[income_latino$variable=="B02001_002"]<-"whitepop1317"
+income_latino$variable[income_latino$variable=="B03001_003"]<-"latinopop1317"
+income_latino$variable[income_latino$variable=="B19013_001"]<-"medinc1317"
+income_latino$variable[income_latino$variable=="B02001_003"]<-"black1317"
+income_latino$variable[income_latino$variable=="B02001_004"]<-"amerind1317"
+income_latino$variable[income_latino$variable=="B02001_005"]<-"asian1317"
+income_latino$variable[income_latino$variable=="B02001_006"]<-"hawaiian1317"
+income_latino$variable[income_latino$variable=="B02001_007"]<-"other1317"
+income_latino$variable[income_latino$variable=="B02001_008"]<-"twoormoreraces1317"
+income_latino$variable[income_latino$variable=="B23025_007"]<-"unemploy1317"
+income_latino$variable[income_latino$variable=="B23025_001"]<-"employtot"
+income_latino$variable[income_latino$variable=="B99051_005"]<-"foreign1317"
+income_latino$variable[income_latino$variable=="B99051_001"]<-"citizentot"
+
+income_latino<-income_latino %>% 
+  select(NAME, variable, estimate) %>%
+  separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
+  spread(variable, estimate) %>%
+mutate(perclatino1317=latinopop1317/totpop1317, percwhite1317=whitepop1317/totpop1317, percblack1317=black1317/totpop1317, perc_otherrace=(amerind1317+asian1317+hawaiian1317+other1317+twoormoreraces1317)/totpop1317, perc_unemploy1317=unemploy1317/employtot,
+      perc_foreign1317=foreign1317/citizentot) %>%
+  select(county, state_name, perclatino1317, percwhite1317, totpop1317, medinc1317,percblack1317,perc_otherrace,perc_unemploy1317,perc_foreign1317)
+income_latino$county[income_latino$county=="Doña Ana County"]<-"Dona Ana County"
+income_latino$county[income_latino$county=="LaSalle Parish"]<-"La Salle Parish"
+
+income_latino <-income_latino %>% mutate(county=tolower(county))
+
+allstates<-left_join(allstates, income_latino, by=c("state_name","county"))
+
+
+#sf1<-load_variables(2010,"sf1",cache=TRUE)
+#P001001--total population
+#P002001-urban and rural
+#P002003--inside urbanized areas (50,000 or more people)
+#P002004--inside urbanized clusters (at least 2,500 and less than 50,000 people)
+
+pop<-get_decennial(geography="county", variables=c("P001001","P002003","P002004"))
+pop$variable[pop$variable=="P001001"]<-"totpop"
+pop$variable[pop$variable=="P002003"]<-"urbarea"
+pop$variable[pop$variable=="P002004"]<-"urbclust"
+
+pop<-pop %>% 
+  separate(NAME,c("county","state_name"), sep=", ", fill="right") %>% 
+  spread(variable, value) %>% mutate(urb2010=urbarea/totpop, urbclust2010=(urbarea+urbclust)/totpop) %>%
+  select(county, state_name, urb2010, urbclust2010)
+pop$county[pop$county=="Do?a Ana County"]<-"Dona Ana County"
+pop$county[pop$county=="LaSalle Parish"]<-"La Salle Parish"
+
+pop<- pop %>% mutate(county=tolower(county))
+
+allstates<-left_join(allstates, pop, by=c("state_name","county"))
+
+#Educational attainment:
+educ<-read_csv("ACS_17_5YR_B15003_with_ann.csv", col_names = TRUE)
+educ<-educ[2:nrow(educ),]
+educ<-educ %>% select(NAME=`GEO.display-label`,tot=HD01_VD01,HS=HD01_VD17, GED=HD01_VD18, BA=HD01_VD22
+) %>% 
+  separate(NAME,c("county","state_name"), sep=", ", fill="right") %>%
+  mutate(HS=as.numeric(HS),GED=as.numeric(GED), tot=as.numeric(tot), BA=as.numeric(BA)) %>%
+  mutate(perc_HS_GED=(HS+GED)/tot, perc_BA=BA/tot) %>% select(county, state_name, perc_HS_GED,perc_BA)
+
+educ$county[educ$county=="Do<f1>a Ana County"]<-"Dona Ana County"
+educ$county[educ$county=="LaSalle Parish"]<-"La Salle Parish"
+
+educ<-educ %>% mutate(county=tolower(county))
+
+allstates<-left_join(allstates, educ, by=c("state_name","county"))
+
+#Trump's margin:
+trump2016<-read_csv("2016PresResults.csv", col_names = TRUE)
+trump2016$county_name[trump2016$county_name=="Oglala County"]<-"oglala lakota county"
+
+trump2016<-trump2016 %>% select(county=county_name, state=state_abbr, trump2016=votes_gop, clinton2016=votes_dem, tot_votes2016=total_votes) %>% mutate(trumpmarg=(trump2016/tot_votes2016)-(clinton2016/tot_votes2016),county=tolower(county))
+
+#trump2016<-trump2016 %>% select(FIPS=combined_fips, trump2016=votes_gop, clinton2016=votes_dem, tot_votes2016=total_votes) %>% mutate(trumpmarg=(trump2016/tot_votes2016)-(clinton2016/tot_votes2016))
+
+allstates<-left_join(allstates, trump2016, by=c("state","county"))
+#allstates1<-left_join(allstates, trump2016, by=c("FIPS"))
+
+
+
+
+```
+
+GDP from BEA:
+```{r}
+
+gdp<-read.csv("GDP.csv", header = TRUE, skip=2)
+
+gdp12 <-gdp[1:12452,] %>% select(county=X.1, state=X.2, Industry=X.4,  GDP2015=X2012) %>% spread(Industry, GDP2015)
+names(gdp12)<-c("county","state","GDP2012_gvnt","GDP2012_goods","GDP2012_serv","GDP2012")
+
+gdp<-gdp[1:12452,] %>% select(county=X.1, state=X.2, Industry=X.4,  GDP2015=X2015) %>% spread(Industry, GDP2015)
+names(gdp)<-c("county","state","GDP2015_gvnt","GDP2015_goods","GDP2015_serv","GDP2015")
+
+gdp<-left_join(gdp, gdp12)
+
+gdp<-gdp %>% mutate(county=as.character(county),GDP2015=as.numeric(as.character(GDP2015)), GDP2015_gvnt=as.numeric(as.character(GDP2015_gvnt)),GDP2015_goods=as.numeric(as.character(GDP2015_goods)),GDP2015_serv=as.numeric(as.character(GDP2015_serv)),GDP2012=as.numeric(as.character(GDP2012)), GDP2012_gvnt=as.numeric(as.character(GDP2012_gvnt)),GDP2012_goods=as.numeric(as.character(GDP2012_goods)),GDP2012_serv=as.numeric(as.character(GDP2012_serv))) 
+
+ind<-grep(" City",gdp$county,ignore.case =TRUE)
+gdp$county[ind]<-str_replace(gdp$county[ind]," \\(Independent City\\)"," city")
+
+gdp$county[-ind]<-paste0(gdp$county[-ind]," county")
+gdp$county[gdp$state=="LA"]<-str_replace(gdp$county[gdp$state=="LA"],"county","parish")
+gdp<-gdp %>% mutate(county=tolower(county))
+gdp$county[gdp$county=="maui + kalawao county"]<-"maui county"
+gdp$county[gdp$county=="fremont (includes yellowstone park) county"]<-"fremont county"
+gdp$county[gdp$county=="lasalle parish"]<-"la salle parish"
+gdp$county[gdp$county=="carson city city"]<-"carson city"
+gdp$county[gdp$county=="doña ana county"]<-"dona ana county"
+gdp$county[gdp$county=="albemarle + charlottesville county"]<-"albemarle county"
+gdp$county[gdp$county=="alleghany + covington county"]<-"alleghany county"
+gdp$county[gdp$county=="augusta, staunton + waynesboro county"]<-"augusta county"
+gdp$county[gdp$county=="campbell + lynchburg county"]<-"campbell county"
+gdp$county[gdp$county=="carroll + galax county"]<-"carroll county"
+gdp$county[gdp$county=="charles city"]<-"charles city county"
+gdp$county[gdp$county=="dinwiddie, colonial heights + petersburg county"]<-"dinwiddie county"
+gdp$county[gdp$county=="fairfax, fairfax city + falls church"]<-"fairfax county"
+gdp$county[gdp$county=="frederick + winchester county"]<-"frederick county"
+gdp$county[gdp$county=="greensville + emporia county"]<-"greensville county"
+gdp$county[gdp$county=="henry + martinsville county"]<-"henry county"
+gdp$county[gdp$county=="james city + williamsburg"]<-"james city county"
+gdp$county[gdp$county=="montgomery + radford county"]<-"montgomery county"
+gdp$county[gdp$county=="pittsylvania + danville county"]<-"pittsylvania county"
+gdp$county[gdp$county=="prince george + hopewell county"]<-"prince george county"
+gdp$county[gdp$county=="prince william, manassas + manassas park county"]<-"prince william county"
+gdp$county[gdp$county=="roanoke + salem county"]<-"roanoke county"
+
+gdp$county[gdp$county=="rockbridge, buena vista + lexington county"]<-"rockbridge county"
+gdp$county[gdp$county=="rockingham + harrisonburg county"]<-"rockingham county"
+gdp$county[gdp$county=="southampton + franklin county"]<-"southampton county"
+gdp$county[gdp$county=="spotsylvania + fredericksburg county"]<-"spotsylvania county"
+gdp$county[gdp$county=="washington + bristol county"]<-"washington county"
+gdp$county[gdp$county=="wise + norton county"]<-"wise county"
+gdp$county[gdp$county=="york + poquoson county"]<-"york county"
+
+
+
+
+
+
+
+allstates<-left_join(allstates, gdp, by=c("state","county"))
+
+
+```
+
+
+State-level GDP:
+```{r}
+gdpS<-read.csv("GDPstate0219.csv", header = TRUE, skip=4)
+
+gdpS<-gdpS[1:(nrow(gdpS)-1),] %>% select(state_name=X, stateGDP=X.1) %>% mutate(stateGDP=str_remove_all(stateGDP, "\\,")) %>% mutate(stateGDP=as.numeric(as.character(stateGDP)))
+allstates<-left_join(allstates, gdpS, by="state_name")
+
+
+```
+
+
+
+Double-check soy data:
+
+```{r}
+
+soydata<-read_csv("USDA_soybeans2012.csv", col_names = TRUE)
+#soydata<-soydata %>% filter(`Data Item` %in% c("SOYBEANS - ACRES HARVESTED","SOYBEANS - SALES, MEASURED IN $", "SOYBEANS - PRODUCTION, MEASURED IN BU")) %>% select(state_name=State, county=County, state_num=`State ANSI`,county_num=`County ANSI`,`Data Item`, Value) %>% mutate(Value=str_remove_all(Value,","), county=tolower(county), FIPS=paste0(state_num, county_num)) %>% mutate(Value=as.numeric(Value), FIPS<-as.numeric(FIPS)) %>% spread(`Data Item`, Value) 
+
+soydata<-soydata %>% filter(`Data Item` %in% c("SOYBEANS - ACRES HARVESTED","SOYBEANS - SALES, MEASURED IN $", "SOYBEANS - PRODUCTION, MEASURED IN BU")) %>% select(state_num=`State ANSI`,county_num=`County ANSI`,`Data Item`, Value) %>% mutate(Value=str_remove_all(Value,","), FIPS=paste0(state_num, county_num)) %>% mutate(Value=as.numeric(Value), FIPS<-as.numeric(FIPS)) %>% spread(`Data Item`, Value) 
+
+#soydata$state_name<-toTitleCase(tolower(soydata$state_name))
+soydata<-soydata[,4:7]
+names(soydata)<-c("FIPS","soyarea","prod_bush","sales_USD")
+#names(soydata)<-c(names(soydata)[1:2],"soyarea","prod_bush","sales_USD")
+
+#ind<-setdiff(c(1:nrow(soydata)),grep(" city",soydata$county,ignore.case =TRUE))
+#soydata$county[ind]<-paste0(soydata$county[ind]," county")
+#soydata$county[soydata$state_name=="Louisiana"]<-str_replace(soydata$county[soydata$state_name=="Louisiana"],"county","parish")
+#soydata$county[soydata$county=="o brian county"]<-"o'brian county"
+
+allstates<-left_join(allstates, soydata, by=c("FIPS") )
+allstates$soyarea[is.na(allstates$soyarea)]<-0
+allstates$prod_bush[is.na(allstates$prod_bush)]<-0
+allstates$sales_USD[is.na(allstates$sales_USD)]<-0
+
+
+
+```
+
+Add ditrict-level data:
+
+```{r}
+dist<-read_csv("districts.csv", col_names = TRUE)
+names(dist)<-c(names(dist)[1],"state_name","Dist",names(dist)[4:7])
+
+
+allstates$Dist[allstates$state_name %in% c("Alaska", "Delaware","Montana","North Dakota", "South Dakota", "Vermont","Wyoming")]<-0
+allstates<-left_join(allstates, dist, by=c("state_name","Dist"))
+
+write.csv(allstates, "soydataR&R.csv", row.names=FALSE)
+```
+
