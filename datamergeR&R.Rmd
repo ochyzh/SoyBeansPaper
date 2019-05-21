@@ -46,17 +46,17 @@ d<-rbind(d,conn)
 d<-d %>% mutate( soyarea1617=0,soypct=0,soyval12=0, trumpch=(Rep18*Dem16)/(Rep16*Dem18))
 
 #Get corn vars:
-d2<-read_csv("USDAdata.csv", col_names =TRUE)
-d2<-d2 %>% filter(`Data Item`=="CORN - ACRES PLANTED")%>% select(State, County, Value)%>% mutate(Value=str_remove_all(Value,","), county=tolower(County),state_name=State, cornarea1617=as.numeric(Value)) %>% select(county, state_name, cornarea1617)
+#d2<-read_csv("USDAdata.csv", col_names =TRUE)
+#d2<-d2 %>% filter(`Data Item`=="CORN - ACRES PLANTED")%>% select(State, County, Value)%>% mutate(Value=str_remove_all(Value,","), county=tolower(County),state_name=State, cornarea1617=as.numeric(Value)) %>% select(county, state_name, cornarea1617)
 
-d2$state_name<-toTitleCase(tolower(d2$state_name))
+#d2$state_name<-toTitleCase(tolower(d2$state_name))
 
-ind<-setdiff(c(1:nrow(d2)),grep(" City",d2$county,ignore.case =TRUE))
-d2$county[ind]<-paste0(d2$county[ind]," county")
-d2$county<-str_replace(d2$county," City"," city")
+#ind<-setdiff(c(1:nrow(d2)),grep(" City",d2$county,ignore.case =TRUE))
+#d2$county[ind]<-paste0(d2$county[ind]," county")
+#d2$county<-str_replace(d2$county," City"," city")
 
-d<-left_join(d, d2, by=c("county","state_name") )
-d$cornarea1617[is.na(d$cornarea1617)]<-0
+#d<-left_join(d, d2, by=c("county","state_name") )
+#d$cornarea1617[is.na(d$cornarea1617)]<-0
 
 #Get land area:
 land<-read.csv("landarea.csv", header=TRUE) #from 2010 US census
@@ -71,7 +71,7 @@ land$county[ind]<-paste0(land$county[ind]," county")
 
 d<-left_join(d, land, by=c("state","county"))
 
-d <- d %>% mutate(cornpct=100*cornarea1617/lndarea)
+#d <- d %>% mutate(cornpct=100*cornarea1617/lndarea)
 
 #Open soy states:
 d1<-read.csv("merge1618.csv", header=TRUE) 
@@ -302,7 +302,7 @@ allstates$sales_USD[is.na(allstates$sales_USD)]<-0
 
 ```
 
-Add ditrict-level data:
+Add district-level data:
 
 ```{r}
 dist<-read_csv("districts.csv", col_names = TRUE)
@@ -312,6 +312,20 @@ names(dist)<-c(names(dist)[1],"state_name","Dist",names(dist)[4:7])
 allstates$Dist[allstates$state_name %in% c("Alaska", "Delaware","Montana","North Dakota", "South Dakota", "Vermont","Wyoming")]<-0
 allstates<-left_join(allstates, dist, by=c("state_name","Dist"))
 
+
+```
+
+Add corn and cotton:
+
+```{r}
+
+othercrops<-read_csv("comparecrops.csv", col_names=TRUE)
+allstates<-left_join(allstates, othercrops, by=c("FIPS"))
+allstates$corn_bush[is.na(allstates$corn_bush)]<-0
+allstates$corn_usd[is.na(allstates$corn_usd)]<-0
+allstates$cotton_bales[is.na(allstates$cotton_bales)]<-0
+allstates$cotton_usd[is.na(allstates$cotton_usd)]<-0
+  
 write.csv(allstates, "soydataR&R.csv", row.names=FALSE)
 ```
 
