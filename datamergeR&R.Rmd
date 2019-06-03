@@ -23,14 +23,14 @@ library(tools)
 Merge soy states and non-soy states:
 ```{r}
 #Open non-soy states:
-d<-read.csv("nonsoystates.csv", header=TRUE, na.strings = "NA")
+d<-read_csv("nonsoystates.csv", col_names=TRUE, na = c("", "NA"))
 
 #Aggregate by county and create a splitflag var:
 
 
 d<-d %>% 
   mutate(Dem16=str_remove_all(as.character(Dem16),","), Rep16=str_remove(as.character(Rep16),","),Dem18=str_remove_all(as.character(Dem18),","),Rep18=str_remove_all(as.character(Rep18),",")) %>%
-  mutate(Dem16=as.numeric(Dem16),Rep16=as.numeric(Rep16),Dem18=as.numeric(Dem18),Rep18=as.numeric(Rep18))
+  mutate(Dem16=as.numeric(Dem16),Rep16=as.numeric(Rep16),Dem18=as.numeric(Dem18),Rep18=as.numeric(Rep18), state=as.character(state))
 
 d<-na.omit(d) 
 
@@ -45,18 +45,6 @@ d<-rbind(d,conn)
 
 d<-d %>% mutate( soyarea1617=0,soypct=0,soyval12=0, trumpch=(Rep18*Dem16)/(Rep16*Dem18))
 
-#Get corn vars:
-#d2<-read_csv("USDAdata.csv", col_names =TRUE)
-#d2<-d2 %>% filter(`Data Item`=="CORN - ACRES PLANTED")%>% select(State, County, Value)%>% mutate(Value=str_remove_all(Value,","), county=tolower(County),state_name=State, cornarea1617=as.numeric(Value)) %>% select(county, state_name, cornarea1617)
-
-#d2$state_name<-toTitleCase(tolower(d2$state_name))
-
-#ind<-setdiff(c(1:nrow(d2)),grep(" City",d2$county,ignore.case =TRUE))
-#d2$county[ind]<-paste0(d2$county[ind]," county")
-#d2$county<-str_replace(d2$county," City"," city")
-
-#d<-left_join(d, d2, by=c("county","state_name") )
-#d$cornarea1617[is.na(d$cornarea1617)]<-0
 
 #Get land area:
 land<-read.csv("landarea.csv", header=TRUE) #from 2010 US census
@@ -71,10 +59,9 @@ land$county[ind]<-paste0(land$county[ind]," county")
 
 d<-left_join(d, land, by=c("state","county"))
 
-#d <- d %>% mutate(cornpct=100*cornarea1617/lndarea)
 
 #Open soy states:
-d1<-read.csv("merge1618.csv", header=TRUE) 
+d1<-read_csv("merge1618.csv", col_names=TRUE) 
 
 #Add state name:
 data(fips_codes)
@@ -274,30 +261,31 @@ allstates<-left_join(allstates, gdpS, by="state_name")
 
 
 
-Double-check soy data:
+Add soy data:
 
 ```{r}
 
 soydata<-read_csv("USDA_soybeans2012.csv", col_names = TRUE)
-#soydata<-soydata %>% filter(`Data Item` %in% c("SOYBEANS - ACRES HARVESTED","SOYBEANS - SALES, MEASURED IN $", "SOYBEANS - PRODUCTION, MEASURED IN BU")) %>% select(state_name=State, county=County, state_num=`State ANSI`,county_num=`County ANSI`,`Data Item`, Value) %>% mutate(Value=str_remove_all(Value,","), county=tolower(county), FIPS=paste0(state_num, county_num)) %>% mutate(Value=as.numeric(Value), FIPS<-as.numeric(FIPS)) %>% spread(`Data Item`, Value) 
+soydata<-soydata %>% 
+  filter(`Data Item` %in% c("SOYBEANS - ACRES HARVESTED","SOYBEANS - SALES, MEASURED IN $", "SOYBEANS - PRODUCTION, MEASURED IN BU")) %>% 
+  select(state_num=`State ANSI`,county_num=`County ANSI`,`Data Item`, Value) %>% mutate(Value=str_remove_all(Value,","), FIPS=paste0(state_num, county_num)) %>% mutate(Value=as.numeric(Value), FIPS<-as.numeric(FIPS)) %>% spread(`Data Item`, Value) 
 
-soydata<-soydata %>% filter(`Data Item` %in% c("SOYBEANS - ACRES HARVESTED","SOYBEANS - SALES, MEASURED IN $", "SOYBEANS - PRODUCTION, MEASURED IN BU")) %>% select(state_num=`State ANSI`,county_num=`County ANSI`,`Data Item`, Value) %>% mutate(Value=str_remove_all(Value,","), FIPS=paste0(state_num, county_num)) %>% mutate(Value=as.numeric(Value), FIPS<-as.numeric(FIPS)) %>% spread(`Data Item`, Value) 
-
-#soydata$state_name<-toTitleCase(tolower(soydata$state_name))
 soydata<-soydata[,4:7]
-names(soydata)<-c("FIPS","soyarea","prod_bush","sales_USD")
-#names(soydata)<-c(names(soydata)[1:2],"soyarea","prod_bush","sales_USD")
-
-#ind<-setdiff(c(1:nrow(soydata)),grep(" city",soydata$county,ignore.case =TRUE))
-#soydata$county[ind]<-paste0(soydata$county[ind]," county")
-#soydata$county[soydata$state_name=="Louisiana"]<-str_replace(soydata$county[soydata$state_name=="Louisiana"],"county","parish")
-#soydata$county[soydata$county=="o brian county"]<-"o'brian county"
+names(soydata)<-c("FIPS","soyarea12","prod_bush12","sales_USD12")
 
 allstates<-left_join(allstates, soydata, by=c("FIPS") )
-allstates$soyarea[is.na(allstates$soyarea)]<-0
-allstates$prod_bush[is.na(allstates$prod_bush)]<-0
-allstates$sales_USD[is.na(allstates$sales_USD)]<-0
+allstates$soyarea12[is.na(allstates$soyarea12)]<-0
+allstates$prod_bush12[is.na(allstates$prod_bush12)]<-0
+allstates$sales_USD12[is.na(allstates$sales_USD12)]<-0
 
+soy2017<-read_csv("soy2017.csv", col_names = TRUE, na=c("", "NA","(D)"))
+soy2017<-soy2017[,3:6]
+names(soy2017)<-c("FIPS","soyarea17","prod_bush17","sales_USD17")
+
+allstates<-left_join(allstates, soy2017, by=c("FIPS") )
+allstates$soyarea17[is.na(allstates$soyarea17)]<-0
+allstates$prod_bush17[is.na(allstates$prod_bush17)]<-0
+allstates$sales_USD17[is.na(allstates$sales_USD17)]<-0
 
 
 ```

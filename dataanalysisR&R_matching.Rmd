@@ -1,0 +1,137 @@
+---
+title: "dataanalysis R&R"
+author: "Olga Chyzh"
+date: "May 20, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
+```
+
+Libraries:
+```{r}
+library(tidyverse)
+library(magrittr)
+library(cem)
+library(optmatch)
+library(RItools)
+library(xtable)
+library(lme4)
+
+```
+
+```{r}
+rm(list=ls())
+trumpilot<-read.csv("soydataR&R.csv", header=TRUE)
+## Generate measure of vote shift
+trumpilot$Rep18perc <- with(trumpilot, as.numeric(Rep18)/(as.numeric(Rep18)+as.numeric(Dem18)))
+trumpilot$Rep16perc <- with(trumpilot, as.numeric(Rep16)/(as.numeric(Rep16)+as.numeric(Dem16)))
+trumpilot$votech <- with(trumpilot, 100*(Rep18perc-Rep16perc))
+
+trumpilot<-subset(trumpilot, is.finite(votech) & Rep18!=0 & Rep16!=0 & Dem18!=0 & Dem16!=0) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
+
+## Generate state variable for state fixed effects
+trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
+trumpilot$soyval<-with(trumpilot, 100*sales_USD12/(GDP2012*1000))
+trumpilot$soyval[is.na(trumpilot$soyval)]<-0
+
+trumpilot$soycounty_bin<-as.numeric(trumpilot$prod_bush12>10000)
+
+```
+
+
+Matching:
+```{r}
+
+trumpilot4<-trumpilot %>% select(FIPS,votech,soycounty_bin,GDP2015,totpop1317,perc_unemploy1317,perc_HS_GED,perc_BA,urb2010,perclatino1317,percblack1317,percwhite1317,perc_otherrace,perc_foreign1317,Rep16perc,votech,prod_bush12,sales_USD12,statefips) %>% 
+mutate(ln_gdpc=log(GDP2015/totpop1317),                                                         perc_latino1317=perclatino1317*100,ln_perc_latino1317=log(perclatino1317*100+1),                             perc_HS_GED=perc_HS_GED*100,                                                                                 perc_BA=perc_BA*100,                                               ln_perc_black1317=log(percblack1317*100+1),
+ln_perc_white=log(percwhite1317*100),
+perc_unemploy1317=perc_unemploy1317*100,                                                                     perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),        sales_USD12=sales_USD12/100000, ln_sales_USD12=log(sales_USD12/1000+1),                                      prod_bush12=prod_bush12/1000000,ln_prod_bush12=log(prod_bush12+1),                                           Rep16perc=Rep16perc*100,
+ln_perc_other=log(100*perc_otherrace+1)) %>%
+select(statefips,soycounty_bin,votech,ln_gdpc,ln_perc_latino1317,perc_HS_GED,perc_BA,urb2010,ln_perc_black1317,ln_perc_white,perc_unemploy1317,ln_perc_foreign1317,ln_sales_USD12,ln_prod_bush12,Rep16perc,ln_perc_other,FIPS) 
+row.names(trumpilot4)<-trumpilot4$FIPS
+trumpilot4<-na.omit(trumpilot4)
+trumpilot4<-trumpilot4 %>% select(statefips,soycounty_bin,votech,ln_prod_bush12,ln_gdpc,ln_perc_latino1317,perc_HS_GED,perc_BA,urb2010,ln_perc_black1317,perc_unemploy1317,ln_perc_foreign1317,Rep16perc,ln_perc_other) 
+
+#Balance in the original data:
+xBalance(soycounty_bin ~  ln_gdpc+perc_unemploy1317+perc_HS_GED+perc_BA+urb2010+ln_perc_black1317+ln_perc_other+ln_perc_latino1317+ln_perc_foreign1317+Rep16perc, 
+  data = trumpilot4, 
+  report = c("chisquare.test","std.diffs"))
+
+
+unemploycuts<-seq(from=24,to=87,by=7)
+repcuts<-c(25,50,75)
+gdpcuts<-quantile(trumpilot4$ln_gdpc, probs=c(.1,.2,.3,.4,.5,.6,.7,.8,.9))
+HScuts<-c(10,30,40,50)
+BAcuts<-c(10,15,30)
+foreigncuts<-c(1000,5000)
+trumpilot4$urbcut=as.factor(as.numeric(trumpilot4$urb2010>0))
+mat1 <- cem(treatment = "soycounty_bin",  drop=c("ln_perc_white","votech","ln_prod_bush12","statefips","urb2010","ln_gdpc_sq"), cutpoints=list(ln_gdpc=gdpcuts,perc_unemploy1317=unemploycuts,perc_BA=BAcuts,ln_perc_black1317=3,
+ln_perc_foreign1317=foreigncuts,ln_perc_other=log(11),Rep16perc=repcuts),data = trumpilot4, keep.all = TRUE)
+mat1
+mat1$breaks
+
+#Balance test (make table):
+xBalance(soycounty_bin ~  ln_gdpc+perc_unemploy1317+perc_HS_GED+perc_BA+urb2010+ln_perc_black1317+ln_perc_other+ln_perc_latino1317+ln_perc_foreign1317+Rep16perc, 
+  data = trumpilot4[mat1$matched==TRUE,], 
+  report = c("chisquare.test","adj.mean.diffs","std.diffs"))
+
+
+
+```
+
+Centering  variables in the matched sample:
+```{r}
+
+center<-function(myvar){
+  (myvar-mean(myvar, na.rm=TRUE))
+}
+
+tr_cr<-trumpilot4[mat1$matched==TRUE,] %>% 
+  select(ln_prod_bush12,ln_gdpc,ln_perc_latino1317,perc_HS_GED,perc_BA,urb2010,ln_perc_black1317,perc_unemploy1317,ln_perc_foreign1317,Rep16perc,ln_perc_other)  
+
+tr_cr<-do.call(cbind,lapply(tr_cr,center))
+newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
+colnames(tr_cr)<-newnames
+
+
+trumpilot5<-cbind.data.frame(subset(trumpilot4[mat1$matched==TRUE,], select=c("statefips","votech","soycounty_bin")),tr_cr)
+trumpilot5$ln_gdpc_sq_cr=trumpilot5$ln_gdpc_cr^2
+trumpilot5$ln_gdpc_cu_cr=trumpilot5$ln_gdpc_cr^3
+
+```
+
+Run model:
+```{r}
+#Random effects:
+summary(mmatch1<-lmer(votech ~ ln_prod_bush12_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + (1 |statefips), 
+  data = trumpilot5))
+
+#Make a table
+
+mytable<-as.table(cbind(fixef(mmatch1),sqrt(diag(vcov(mmatch1)))))
+row.names(mytable)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote")
+xtable(mytable, digits=2)
+```
+
+
+Make Graph:
+```{r}
+#Plot distributions:
+data_long <- trumpilot4[mat1$matched==TRUE,] %>%
+gather(covar, value, c("ln_gdpc","perc_unemploy1317","perc_HS_GED","perc_BA","urb2010","ln_perc_black1317","ln_perc_other","ln_perc_latino1317","ln_perc_foreign1317","Rep16perc"))
+labels <- c(ln_gdpc="GDP/cap",perc_unemploy1317="Unemployed",perc_HS_GED="HS/GED",perc_BA="BA",urb2010="Urb",ln_perc_black1317="Black",ln_perc_other="Other Races",ln_perc_latino1317="Latino",ln_perc_foreign1317="Foreign",Rep16perc="Rep 16")
+
+p<-ggplot(data=data_long)+geom_density(aes(x=value,linetype=as.factor(soycounty_bin)))+
+facet_wrap(~covar, nrow=2,scales = "free",labeller=labeller(covar = labels))+
+  theme(legend.position="none",strip.text = element_text(size=8),
+          strip.background = element_rect( fill="white"))+ scale_y_continuous(breaks=NULL) + ylab("")+ scale_x_continuous(breaks=NULL) + xlab("")+scale_linetype_manual(values=c("solid","dashed"))
+p
+
+ggsave("matchplot.jpg")
+
+
+```
+
