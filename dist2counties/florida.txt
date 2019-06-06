@@ -1,0 +1,68 @@
+County                                                                      Congressional District
+Alachua                                                                                          3
+Baker                                                                                            5
+Bay                                                                                              2
+Bradford                                                                                         3
+Brevard                                                                                          8
+Broward                                                                                   20,22-24
+Calhoun                                                                                          2
+Charlotte                                                                                       17
+Citrus                                                                                          11
+Clay                                                                                             3
+Collier                                                                                      19,25
+Columbia                                                                                       2,5
+DeSoto                                                                                          17
+Dixie                                                                                            2
+Duval                                                                                          4,5
+Escambia                                                                                         1
+Flagler                                                                                          6
+Franklin                                                                                         2
+Gadsden                                                                                          5
+Gilchrist                                                                                        2
+Glades                                                                                          17
+Gulf                                                                                             2
+Hamilton                                                                                         5
+Hardee                                                                                          17
+Hendry                                                                                          25
+Hernando                                                                                        11
+Highlands                                                                                       17
+Hillsborough                                                                              12,14-16
+Holmes                                                                                         1,2
+Indian River                                                                                     8
+Jackson                                                                                          2
+Jefferson                                                                                      2,5
+Lafayette                                                                                        2
+Lake                                                                                       6,11,15
+Lee                                                                                          17,19
+Leon                                                                                           2,5
+Levy                                                                                             2
+Liberty                                                                                          2
+Madison                                                                                          5
+Manatee                                                                                         16
+Marion                                                                                      2,3,11
+Martin                                                                                          18
+Miami-Dade                                                                                   23-27
+Monroe                                                                                          26
+Nassau                                                                                           4
+Okaloosa                                                                                         1
+Okeechobee                                                                                      17
+Orange                                                                                        7-10
+Osceola                                                                                          9
+Palm Beach                                                                                18,20-22
+Pasco                                                                                           12
+Pinellas                                                                                     12,13
+Polk                                                                                       9,15,17
+Putnam                                                                                           3
+Santa Rosa                                                                                       1
+Sarasota                                                                                     16,17
+Seminole                                                                                         7
+St. Johns                                                                                      4,6
+St. Lucie                                                                                       18
+Sumter                                                                                          11
+Suwannee                                                                                         2
+Taylor                                                                                           2
+Union                                                                                            3
+Volusia                                                                                          6
+Wakulla                                                                                          2
+Walton                                                                                           1
+Washington                                                                                       2

@@ -1,0 +1,22 @@
+County                                                                      Congressional District
+Atlantic                                                                                         2
+Bergen                                                                                       5,8,9
+Burlington                                                                                     1-3
+Camden                                                                                         1,2
+Cape May                                                                                         2
+Cumberland                                                                                       2
+Essex                                                                                    7,8,10,11
+Gloucester                                                                                     1,2
+Hudson                                                                                        8-10
+Hunterdon                                                                                        7
+Mercer                                                                                        4,12
+Middlesex                                                                                     6,12
+Monmouth                                                                                       4,6
+Morris                                                                                        7,11
+Ocean                                                                                          2-4
+Passaic                                                                                     5,9,11
+Salem                                                                                            2
+Somerset                                                                                      7,12
+Sussex                                                                                        5,11
+Union                                                                                    7,8,10,12
+Warren                                                                                         5,7

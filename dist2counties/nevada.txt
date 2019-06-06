@@ -1,0 +1,18 @@
+County                                                   Congressional District
+Carson City                                                                                      2
+Churchill                                                                                        2
+Clark                                                                                        1,3,4
+Douglas                                                                                          2
+Elko                                                                                             2
+Esmeralda                                                                                        4
+Eureka                                                                                           2
+Humboldt                                                                                         2
+Lander                                                                                           2
+Lincoln                                                                                          4
+Lyon                                                                                           2,4
+Mineral                                                                                          4
+Nye                                                                                              4
+Pershing                                                                                         2
+Storey                                                                                           2
+Washoe                                                                                           2
+White Pine                                                                                       4

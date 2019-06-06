@@ -1,0 +1,17 @@
+County                                                                      Congressional District
+Androscoggin                                                                                     2
+Aroostook                                                                                        2
+Cumberland                                                                                       1
+Franklin                                                                                         2
+Hancock                                                                                          2
+Kennebec                                                                                       1,2
+Knox                                                                                             1
+Lincoln                                                                                          1
+Oxford                                                                                           2
+Penobscot                                                                                        2
+Piscataquis                                                                                      2
+Sagadahoc                                                                                        1
+Somerset                                                                                         2
+Waldo                                                                                            2
+Washington                                                                                       2
+York                                                                                             1

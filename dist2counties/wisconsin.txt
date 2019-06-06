@@ -1,0 +1,73 @@
+County                                                                      Congressional District
+Adams                                                                                            3
+Ashland                                                                                          7
+Barron                                                                                           7
+Bayfield                                                                                         7
+Brown                                                                                            8
+Buffalo                                                                                          3
+Burnett                                                                                          7
+Calumet                                                                                          8
+Chippewa                                                                                       3,7
+Clark                                                                                            7
+Columbia                                                                                         6
+Crawford                                                                                         3
+Dane                                                                                             2
+Dodge                                                                                          5,6
+Door                                                                                             8
+Douglas                                                                                          7
+Dunn                                                                                             3
+Eau Claire                                                                                       3
+Florence                                                                                         7
+Fond du Lac                                                                                      6
+Forest                                                                                           7
+Grant                                                                                            3
+Green                                                                                            2
+Green Lake                                                                                       6
+Iowa                                                                                             2
+Iron                                                                                             7
+Jackson                                                                                        3,7
+Jefferson                                                                                        5
+Juneau                                                                                         3,7
+Kenosha                                                                                          1
+Kewaunee                                                                                         8
+La Crosse                                                                                        3
+Lafayette                                                                                        2
+Langlade                                                                                         7
+Lincoln                                                                                          7
+Manitowoc                                                                                        6
+Marathon                                                                                         7
+Marinette                                                                                        8
+Marquette                                                                                        6
+Menominee                                                                                        8
+Milwaukee                                                                                    1,4-6
+Monroe                                                                                         3,7
+Oconto                                                                                           8
+Oneida                                                                                           7
+Outagamie                                                                                        8
+Ozaukee                                                                                          6
+Pepin                                                                                            3
+Pierce                                                                                           3
+Polk                                                                                             7
+Portage                                                                                          3
+Price                                                                                            7
+Racine                                                                                           1
+Richland                                                                                       2,3
+Rock                                                                                           1,2
+Rusk                                                                                             7
+Sauk                                                                                             2
+Sawyer                                                                                           7
+Shawano                                                                                          8
+Sheboygan                                                                                        6
+St. Croix                                                                                        7
+Taylor                                                                                           7
+Trempealeau                                                                                      3
+Vernon                                                                                           3
+Vilas                                                                                            7
+Walworth                                                                                       1,5
+Washburn                                                                                         7
+Washington                                                                                       5
+Waukesha                                                                                     1,4,5
+Waupaca                                                                                          8
+Waushara                                                                                         6
+Winnebago                                                                                      6,8
+Wood                                                                                           3,7

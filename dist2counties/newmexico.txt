@@ -1,0 +1,34 @@
+County                                                                      Congressional District
+Bernalillo                                                                                     1-3
+Catron                                                                                           2
+Chaves                                                                                           2
+Cibola                                                                                           2
+Colfax                                                                                           3
+Curry                                                                                            3
+De Baca                                                                                          2
+Doña Ana                                                                                         2
+Eddy                                                                                             2
+Grant                                                                                            2
+Guadalupe                                                                                        2
+Harding                                                                                          3
+Hidalgo                                                                                          2
+Lea                                                                                              2
+Lincoln                                                                                          2
+Los Alamos                                                                                       3
+Luna                                                                                             2
+McKinley                                                                                       2,3
+Mora                                                                                             3
+Otero                                                                                            2
+Quay                                                                                             3
+Rio Arriba                                                                                       3
+Roosevelt                                                                                      2,3
+San Juan                                                                                         3
+San Miguel                                                                                       3
+Sandoval                                                                                       1,3
+Santa Fe                                                                                       1,3
+Sierra                                                                                           2
+Socorro                                                                                          2
+Taos                                                                                             3
+Torrance                                                                                         1
+Union                                                                                            3
+Valencia                                                                                       1,2

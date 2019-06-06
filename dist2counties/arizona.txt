@@ -1,0 +1,16 @@
+County                                                                      Congressional District
+Apache                                                                                           1
+Cochise                                                                                          2
+Coconino                                                                                         1
+Gila                                                                                           1,4
+Graham                                                                                           1
+Greenlee                                                                                         1
+La Paz                                                                                           4
+Maricopa                                                                                     1,3-9
+Mohave                                                                                         1,4
+Navajo                                                                                           1
+Pima                                                                                           1-3
+Pinal                                                                                        1,3,4
+Santa Cruz                                                                                       3
+Yavapai                                                                                        1,4
+Yuma                                                                                           3,4

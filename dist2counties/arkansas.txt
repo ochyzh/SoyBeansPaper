@@ -1,0 +1,79 @@
+ARKANSAS CONGRESSIONAL DISTRICTS BY COUNTY
+
+County                                                                      Congressional District
+
+Arkansas                                                                                         1
+Ashley                                                                                           4
+Baxter                                                                                           1
+Benton                                                                                           3
+Boone                                                                                            3
+Bradley                                                                                          4
+Calhoun                                                                                          4
+Carroll                                                                                          3
+Chicot                                                                                           1
+Clark                                                                                            4
+Clay                                                                                             1
+Cleburne                                                                                         1
+Cleveland                                                                                        4
+Columbia                                                                                         4
+Conway                                                                                           2
+Craighead                                                                                        1
+Crawford                                                                                       3,4
+Crittenden                                                                                       1
+Cross                                                                                            1
+Dallas                                                                                           4
+Desha                                                                                            1
+Drew                                                                                             4
+Faulkner                                                                                         2
+Franklin                                                                                         4
+Fulton                                                                                           1
+Garland                                                                                          4
+Grant                                                                                            4
+Greene                                                                                           1
+Hempstead                                                                                        4
+Hot Spring                                                                                       4
+Howard                                                                                           4
+Independence                                                                                     1
+Izard                                                                                            1
+Jackson                                                                                          1
+Jefferson                                                                                      1,4
+Johnson                                                                                          4
+Lafayette                                                                                        4
+Lawrence                                                                                         1
+Lee                                                                                              1
+Lincoln                                                                                          1
+Little River                                                                                     4
+Logan                                                                                            4
+Lonoke                                                                                           1
+Madison                                                                                          4
+Marion                                                                                           3
+Miller                                                                                           4
+Mississippi                                                                                      1
+Monroe                                                                                           1
+Montgomery                                                                                       4
+Nevada                                                                                           4
+Newton                                                                                         3,4
+Ouachita                                                                                         4
+Perry                                                                                            2
+Phillips                                                                                         1
+Pike                                                                                             4
+Poinsett                                                                                         1
+Polk                                                                                             4
+Pope                                                                                             3
+Prairie                                                                                          1
+Pulaski                                                                                          2
+Randolph                                                                                         1
+Saline                                                                                           2
+Scott                                                                                            4
+Searcy                                                                                         1,3
+Sebastian                                                                                      3,4
+Sevier                                                                                           4
+Sharp                                                                                            1
+St. Francis                                                                                      1
+Stone                                                                                            1
+Union                                                                                            4
+Van Buren                                                                                        2
+Washington                                                                                       3
+White                                                                                            2
+Woodruff                                                                                         1
+Yell                                                                                             4

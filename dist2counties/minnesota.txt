@@ -1,0 +1,88 @@
+County                                                                      Congressional District
+Aitkin                                                                                           8
+Anoka                                                                                        3,5,6
+Becker                                                                                           7
+Beltrami                                                                                       7,8
+Benton                                                                                           6
+Big Stone                                                                                        7
+Blue Earth                                                                                       1
+Brown                                                                                            1
+Carlton                                                                                          8
+Carver                                                                                         3,6
+Cass                                                                                             8
+Chippewa                                                                                         7
+Chisago                                                                                          8
+Clay                                                                                             7
+Clearwater                                                                                       7
+Cook                                                                                             8
+Cottonwood                                                                                     1,7
+Crow Wing                                                                                        8
+Dakota                                                                                           2
+Dodge                                                                                            1
+Douglas                                                                                          7
+Faribault                                                                                        1
+Fillmore                                                                                         1
+Freeborn                                                                                         1
+Goodhue                                                                                          2
+Grant                                                                                            7
+Hennepin                                                                                     3,5,6
+Houston                                                                                          1
+Hubbard                                                                                          8
+Isanti                                                                                           8
+Itasca                                                                                           8
+Jackson                                                                                          1
+Kanabec                                                                                          8
+Kandiyohi                                                                                        7
+Kittson                                                                                          7
+Koochiching                                                                                      8
+Lac qui Parle                                                                                    7
+Lake                                                                                             8
+Lake of the Woods                                                                                7
+Le Sueur                                                                                         1
+Lincoln                                                                                          7
+Lyon                                                                                             7
+Mahnomen                                                                                         7
+Marshall                                                                                         7
+Martin                                                                                           1
+McLeod                                                                                           7
+Meeker                                                                                           7
+Mille Lacs                                                                                       8
+Morrison                                                                                         8
+Mower                                                                                            1
+Murray                                                                                           7
+Nicollet                                                                                         1
+Nobles                                                                                           1
+Norman                                                                                           7
+Olmsted                                                                                          1
+Otter Tail                                                                                       7
+Pennington                                                                                       7
+Pine                                                                                             8
+Pipestone                                                                                        7
+Polk                                                                                             7
+Pope                                                                                             7
+Ramsey                                                                                         4,5
+Red Lake                                                                                         7
+Redwood                                                                                          7
+Renville                                                                                         7
+Rice                                                                                           1,2
+Rock                                                                                             1
+Roseau                                                                                           7
+Scott                                                                                            2
+Sherburne                                                                                        6
+Sibley                                                                                           7
+St. Louis                                                                                        8
+Stearns                                                                                        6,7
+Steele                                                                                           1
+Stevens                                                                                          7
+Swift                                                                                            7
+Todd                                                                                             7
+Traverse                                                                                         7
+Wabasha                                                                                          2
+Wadena                                                                                           8
+Waseca                                                                                           1
+Washington                                                                                   2,4,6
+Watonwan                                                                                         1
+Wilkin                                                                                           7
+Winona                                                                                           1
+Wright                                                                                           6
+Yellow Medicine                                                                                  7

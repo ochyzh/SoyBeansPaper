@@ -1,0 +1,59 @@
+County                                                                      Congressional District
+Alameda                                                                                   13,15,17
+Alpine                                                                                           4
+Amador                                                                                           4
+Butte                                                                                            1
+Calaveras                                                                                        4
+Colusa                                                                                           3
+Contra Costa                                                                             5,9,11,15
+Del Norte                                                                                        2
+El Dorado                                                                                        4
+Fresno                                                                                  4,16,21,22
+Glenn                                                                                          1,3
+Humboldt                                                                                         2
+Imperial                                                                                        51
+Inyo                                                                                             8
+Kern                                                                                         21,23
+Kings                                                                                           21
+Lake                                                                                           3,5
+Lassen                                                                                           1
+Los Angeles                                                          23,25-30,32-35,37-40,43,44,47
+Madera                                                                                        4,16
+Marin                                                                                            2
+Mariposa                                                                                         4
+Mendocino                                                                                        2
+Merced                                                                                          16
+Modoc                                                                                            1
+Mono                                                                                             8
+Monterey                                                                                        20
+Napa                                                                                             5
+Nevada                                                                                         1,4
+Orange                                                                                 38,39,45-49
+Placer                                                                                         1,4
+Plumas                                                                                           1
+Riverside                                                                              36,41,42,50
+Sacramento                                                                                 3,6,7,9
+San Benito                                                                                      20
+San Bernardino                                                                       8,27,31,35,39
+San Diego                                                                                    49-53
+San Francisco                                                                                12-14
+San Joaquin                                                                                   9,10
+San Luis Obispo                                                                                 24
+San Mateo                                                                                    14,18
+Santa Barbara                                                                                   24
+Santa Clara                                                                                  17-20
+Santa Cruz                                                                                   18,20
+Shasta                                                                                           1
+Sierra                                                                                           1
+Siskiyou                                                                                         1
+Solano                                                                                         3,5
+Sonoma                                                                                         2,5
+Stanislaus                                                                                      10
+Sutter                                                                                           3
+Tehama                                                                                           1
+Trinity                                                                                          2
+Tulare                                                                                       21-23
+Tuolumne                                                                                         4
+Ventura                                                                                   24-26,30
+Yolo                                                                                           3,6
+Yuba                                                                                             3

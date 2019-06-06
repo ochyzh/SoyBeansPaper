@@ -1,0 +1,30 @@
+County                                                                      Congressional District
+Beaver                                                                                           2
+Box Elder                                                                                        1
+Cache                                                                                            1
+Carbon                                                                                           3
+Daggett                                                                                          1
+Davis                                                                                          1,2
+Duchesne                                                                                         1
+Emery                                                                                            3
+Garfield                                                                                         2
+Grand                                                                                            3
+Iron                                                                                             2
+Juab                                                                                           2,4
+Kane                                                                                             2
+Millard                                                                                          2
+Morgan                                                                                           1
+Piute                                                                                            2
+Rich                                                                                             1
+Salt Lake                                                                                      2-4
+San Juan                                                                                         3
+Sanpete                                                                                        2,4
+Sevier                                                                                           2
+Summit                                                                                           1
+Tooele                                                                                           2
+Uintah                                                                                           1
+Utah                                                                                           3,4
+Wasatch                                                                                          3
+Washington                                                                                       2
+Wayne                                                                                            2
+Weber                                                                                            1

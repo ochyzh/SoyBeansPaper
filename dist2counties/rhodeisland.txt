@@ -1,0 +1,6 @@
+County                                                                      Congressional District
+Bristol                                                                                          1
+Kent                                                                                             2
+Newport                                                                                          1
+Providence                                                                                     1,2
+Washington                                                                                       2

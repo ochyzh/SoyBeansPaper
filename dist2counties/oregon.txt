@@ -1,0 +1,37 @@
+County                                                                      Congressional District
+Baker                                                                                            2
+Benton                                                                                         4,5
+Clackamas                                                                                      3,5
+Clatsop                                                                                          1
+Columbia                                                                                         1
+Coos                                                                                             4
+Crook                                                                                            2
+Curry                                                                                            4
+Deschutes                                                                                        2
+Douglas                                                                                          4
+Gilliam                                                                                          2
+Grant                                                                                            2
+Harney                                                                                           2
+Hood River                                                                                       2
+Jackson                                                                                          2
+Jefferson                                                                                        2
+Josephine                                                                                      2,4
+Klamath                                                                                          2
+Lake                                                                                             2
+Lane                                                                                             4
+Lincoln                                                                                          5
+Linn                                                                                             4
+Malheur                                                                                          2
+Marion                                                                                           5
+Morrow                                                                                           2
+Multnomah                                                                                    1,3,5
+Polk                                                                                             5
+Sherman                                                                                          2
+Tillamook                                                                                        5
+Umatilla                                                                                         2
+Union                                                                                            2
+Wallowa                                                                                          2
+Wasco                                                                                            2
+Washington                                                                                       1
+Wheeler                                                                                          2
+Yamhill                                                                                          1

@@ -1,0 +1,65 @@
+County                                                                      Congressional District
+Acadia                                                                                           3
+Allen                                                                                            4
+Ascension                                                                                      2,6
+Assumption                                                                                     2,6
+Avoyelles                                                                                        5
+Beauregard                                                                                       4
+Bienville                                                                                        4
+Bossier                                                                                          4
+Caddo                                                                                            4
+Calcasieu                                                                                        3
+Caldwell                                                                                         5
+Cameron                                                                                          3
+Catahoula                                                                                        5
+Claiborne                                                                                        4
+Concordia                                                                                        5
+De Soto                                                                                          4
+East Baton Rouge                                                                               2,6
+East Carroll                                                                                     5
+East Feliciana                                                                                 5,6
+Evangeline                                                                                       4
+Franklin                                                                                         5
+Grant                                                                                            5
+Iberia                                                                                           3
+Iberville                                                                                      2,6
+Jackson                                                                                          5
+Jefferson                                                                                      1,2
+Jefferson Davis                                                                                  3
+La Salle                                                                                         5
+Lafayette                                                                                        3
+Lafourche                                                                                      1,6
+Lincoln                                                                                          5
+Livingston                                                                                       6
+Madison                                                                                          5
+Morehouse                                                                                        5
+Natchitoches                                                                                     4
+Orleans                                                                                        1,2
+Ouachita                                                                                         5
+Plaquemines                                                                                      1
+Pointe Coupee                                                                                    6
+Rapides                                                                                          5
+Red River                                                                                        4
+Richland                                                                                         5
+Sabine                                                                                           4
+St. Bernard                                                                                      1
+St. Charles                                                                                    2,6
+St. Helena                                                                                     5,6
+St. James                                                                                        2
+St. John the Baptist                                                                           2,6
+St. Landry                                                                                     3-5
+St. Martin                                                                                       3
+St. Mary                                                                                         3
+St. Tammany                                                                                      1
+Tangipahoa                                                                                     1,5
+Tensas                                                                                           5
+Terrebonne                                                                                     1,6
+Union                                                                                            4
+Vermilion                                                                                        3
+Vernon                                                                                           4
+Washington                                                                                       5
+Webster                                                                                          4
+West Baton Rouge                                                                               2,6
+West Carroll                                                                                     5
+West Feliciana                                                                                   5
+Winn                                                                                             5

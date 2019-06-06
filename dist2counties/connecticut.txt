@@ -1,0 +1,9 @@
+County                                                                      Congressional District
+Fairfield                                                                                      3-5
+Hartford                                                                                     1,2,5
+Litchfield                                                                                     1,5
+Middlesex                                                                                      1-3
+New Haven                                                                                      2-5
+New London                                                                                       2
+Tolland                                                                                          2
+Windham                                                                                          2

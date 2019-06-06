@@ -1,0 +1,6 @@
+County                                                                      Congressional District
+Hawaii                                                                                           2
+Honolulu                                                                                       1,2
+Kalawao                                                                                          2
+Kauai                                                                                            2
+Maui                                                                                             2

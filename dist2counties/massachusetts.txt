@@ -1,0 +1,15 @@
+County                                                                      Congressional District
+Barnstable                                                                                       9
+Berkshire                                                                                        1
+Bristol                                                                                      4,8,9
+Dukes                                                                                            9
+Essex                                                                                          3,6
+Franklin                                                                                       1,2
+Hampden                                                                                        1,2
+Hampshire                                                                                      1,2
+Middlesex                                                                                      3-7
+Nantucket                                                                                        9
+Norfolk                                                                                    2,4,7,8
+Plymouth                                                                                     4,8,9
+Suffolk                                                                                      5,7,8
+Worcester                                                                                      1-5

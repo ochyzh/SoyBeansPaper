@@ -36,7 +36,7 @@ d<-na.omit(d)
 
 d<-d %>%
   group_by(FIPS) %>% 
-  summarise(state=first(state), county=first(county),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), county_code=as.character(state_code)) %>% 
+  summarise(state=first(state), county=first(county),state_code=mean(state_code),state_name=first(state_name), county_code=first(county_code),Dem16=sum(Dem16),Rep16=sum(Rep16),Dem18=sum(Dem18),Rep18=sum(Rep18), Dist=min(Dist), Splitflag=as.numeric(length(Dist>1)), county_code=as.character(county_code)) %>% 
   ungroup %>% mutate(county=tolower(county))
 
 conn<-read_csv("connecticut.csv", col_names=TRUE)

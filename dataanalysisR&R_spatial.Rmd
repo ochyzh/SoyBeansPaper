@@ -1,0 +1,200 @@
+---
+title: "dataanalysis R&R spatial"
+author: "Olga Chyzh"
+date: "May 20, 2019"
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message = FALSE,warning = FALSE,fig.cap = "...")
+```
+
+Libraries:
+```{r}
+library(tidyverse)
+library(magrittr)
+library(lme4)
+library(scales)
+library(xtable)
+library(spdep)
+library(spatialreg)
+
+```
+
+```{r}
+rm(list=ls())
+trumpilot<-read.csv("soydataR&R.csv", header=TRUE)
+## Generate measure of vote shift
+trumpilot$Rep18perc <- with(trumpilot, as.numeric(Rep18)/(as.numeric(Rep18)+as.numeric(Dem18)))
+trumpilot$Rep16perc <- with(trumpilot, as.numeric(Rep16)/(as.numeric(Rep16)+as.numeric(Dem16)))
+trumpilot$votech <- with(trumpilot, 100*(Rep18perc-Rep16perc))
+
+trumpilot<-subset(trumpilot, is.finite(votech) & Rep18!=0 & Rep16!=0 & Dem18!=0 & Dem16!=0) #Do we want to throw out all cases in which a major party candidate ran unopposed by the other major party candidate?
+
+## Generate state variable for state fixed effects
+trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
+
+
+```
+
+
+Centering all variables:
+```{r}
+
+center<-function(myvar){
+  (myvar-mean(myvar, na.rm=TRUE))
+}
+
+tr_cr<-trumpilot %>% 
+  select(sales_USD12,prod_bush12, sales_USD17,soyarea17,prod_bush17,GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,percwhite1317,percblack1317,perc_otherrace,perc_unemploy1317,perc_foreign1317,trumpmarg, Rep16perc,corn_bush,corn_usd,cotton_bales,cotton_usd)  %>% 
+  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perc_latino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,perc_white1317=percwhite1317*100,perc_white1317=percwhite1317*100,ln_perc_white1317=log(percwhite1317*100),perc_black1317=percblack1317*100,ln_perc_black1317=log(percblack1317*100+1),ln_perc_latino1317=log(perclatino1317*100+1),perc_unemploy1317=perc_unemploy1317*100,perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),sales_USD12=sales_USD12/100000, prod_bush12=prod_bush12/1000000,prod_bush17=prod_bush17/1000000, ln_sales_USD12=log(sales_USD12/1000+1), ln_bush_pop=log(prod_bush12/(1000000*totpop1317)+1),ln_gdpc=log(GDP2015/totpop1317), ln_prod_bush12=log(prod_bush12+1),ln_soyarea17=log(soyarea17/640+1),ln_prod_bush17=log(prod_bush17+1),ln_sales_USD17=log(sales_USD17/1000+1), Rep16perc=Rep16perc*100,trumpmarg=trumpmarg*100, corn_usd=as.numeric(as.character(corn_usd))) %>% mutate(ln_perc_other=log(100*perc_otherrace+1),perc_other=100*perc_otherrace,corn_bush=corn_bush/1000000,cotton_bales=cotton_bales/10000,ln_corn_bush=log(corn_bush+1), ln_corn_usd=log(corn_usd/1000+1),ln_cotton_bales=log(cotton_bales+1),ln_cotton_usd=log(cotton_usd/1000+1)) 
+
+tr_cr<-do.call(cbind,lapply(tr_cr,center))
+newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
+colnames(tr_cr)<-newnames
+
+
+trumpilot1<-cbind.data.frame(subset(trumpilot, select=c("FIPS","statefips","state","county","Dist","Splitflag","votech")),tr_cr)
+trumpilot1$ln_gdpc_sq_cr=trumpilot1$ln_gdpc_cr^2
+trumpilot1$ln_gdpc_cu_cr=trumpilot1$ln_gdpc_cr^3
+
+```
+
+
+
+Centering variables in non-split county subset:
+```{r}
+
+center<-function(myvar){
+  (myvar-mean(myvar, na.rm=TRUE))
+}
+
+tr_cr<-trumpilot %>% filter(Splitflag==0) %>%
+  select(sales_USD12,soyarea12,prod_bush12,sales_USD17,soyarea17,prod_bush17, GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,percwhite1317,percblack1317,perc_unemploy1317,perc_foreign1317,trumpmarg, PVI2015,perc_otherrace, Rep16perc,corn_bush,corn_usd,cotton_bales,cotton_usd)  %>% 
+  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perc_latino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,perc_white1317=percwhite1317*100,perc_white1317=percwhite1317*100,ln_perc_white1317=log(percwhite1317*100),perc_black1317=percblack1317*100,ln_perc_black1317=log(percblack1317*100+1),ln_perc_latino1317=log(perclatino1317*100+1),perc_unemploy1317=perc_unemploy1317*100,perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),sales_USD12=sales_USD12/100000, soyarea12=soyarea12/640,prod_bush12=prod_bush12/1000000, ln_sales_USD12=log(sales_USD12/1000+1),prod_bush17=prod_bush17/1000000, ln_bush_pop=log(prod_bush12/(1000000*totpop1317)+1), ln_soyarea12=log(soyarea12/640+1),ln_soyarea17=log(soyarea17/640+1),ln_prod_bush17=log(prod_bush17+1),ln_sales_USD17=log(sales_USD17/1000+1), ln_gdpc=log(GDP2015/totpop1317), ln_prod_bush12=log(prod_bush12+1),Rep16perc=Rep16perc*100,trumpmarg=trumpmarg*100,corn_usd=as.numeric(as.character(corn_usd))) %>% mutate(ln_perc_other=log(100*perc_otherrace+1),perc_other=100*perc_otherrace, corn_bush=corn_bush/1000000,cotton_bales=cotton_bales/10000,ln_corn_bush=log(corn_bush+1), ln_corn_usd=log(corn_usd/1000+1),ln_cotton_bales=log(cotton_bales+1),ln_cotton_usd=log(cotton_usd/1000+1)) 
+
+tr_cr<-do.call(cbind,lapply(tr_cr,center))
+newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
+colnames(tr_cr)<-newnames
+
+
+trumpilot2<-cbind.data.frame(subset(trumpilot[trumpilot$Splitflag==0,], select=c("FIPS","statefips","state","county","Dist","votech","incshiftr","distname")),tr_cr)
+trumpilot2$ln_gdpc_sq_cr=trumpilot2$ln_gdpc_cr^2
+trumpilot2$ln_gdpc_cu_cr=trumpilot2$ln_gdpc_cr^3
+```
+
+
+Spatial models:
+
+Make connectivity matrices (this takes forever, so I saved the output and whited this out):
+```{r}
+#contig<-read_csv("contigpairs.csv", col_names=TRUE)
+
+#Make an emply connectivity matrix:
+#W<-matrix(0,nrow=nrow(trumpilot1),ncol=nrow(trumpilot1))
+#dimnames(W) <- list(trumpilot1$FIPS, trumpilot1$FIPS)
+
+#Populate the matrix in accordance to contiguity data:
+#codeW<-function(W,ij){
+#i<-as.character(ij[1])
+#j<-as.character(ij[2])
+#if (length(W[rownames(W)==i, colnames(W)==j])==1){
+#W[rownames(W)==i, colnames(W)==j]<-1
+#return(W)
+#}
+#else {
+# return(W) 
+#}
+#return(W)
+#}
+
+
+#for (dyad in c(1:nrow(contig))) {
+#  ij<-contig[dyad,]
+#W<- codeW(W,ij)
+#}
+
+#write.table(W,"contigmat.txt", row.names=TRUE)
+
+```
+
+```{r}
+W<-read.table("contigmat.txt", row.names=1, header=TRUE)
+#Row-standardize:
+W_st<-W
+W_st[rowSums(W)!=0]<-W[rowSums(W)!=0]/rowSums(W)[rowSums(W)!=0]
+trumpilot1$spatX<-t(trumpilot1$ln_prod_bush12_cr%*%as.matrix(W_st))
+trumpilot1$spatX1<-t(trumpilot1$ln_sales_USD12_cr%*%as.matrix(W_st))
+trumpilot2<-left_join(trumpilot2,subset(trumpilot1, select=c("FIPS","spatX","spatX1")),by=c("FIPS"))
+
+#Spatial X model:
+#M1
+summary(m1_spX<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr  +spatX+ (1  | statefips),data = trumpilot1))
+
+
+#M2
+summary(m2_spX<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr+ spatX1+ (1  | statefips)))
+
+#M3
+summary(m3_spX<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr+ spatX + incshiftr + PVI2015_cr+ (1 | statefips)))
+
+#M4
+summary(m4_spX<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr + spatX1+ incshiftr + PVI2015_cr+(1 | statefips)))
+
+
+#Make a table:
+mytable_spX<-as.table(cbind(c(fixef(m1_spX),NA,NA),c(sqrt(diag(vcov(m1_spX))),NA,NA),c(fixef(m2_spX),NA,NA),c(sqrt(diag(vcov(m2_spX))),NA,NA),fixef(m3_spX),sqrt(diag(vcov(m3_spX))),fixef(m4_spX),sqrt(diag(vcov(m4_spX)))))
+row.names(mytable_spX)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school","Bachelor's","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","Spatial X","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_spX, digits=2)
+
+
+
+```
+
+Spatial Y model (SAR):
+```{r}
+
+W1<-mat2listw(as.matrix(W), row.names=as.integer(as.character(trumpilot1$FIPS)))
+summary(W1$neighbours)
+
+W2<-nb2listw(W1$neighbours, glist=NULL, style="W", zero.policy=TRUE)
+
+#M1:
+spY1<-lagsarlm(votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr +statefips , data=trumpilot1, W2, zero.policy=TRUE)
+summary(spY1)
+
+
+#M2
+spY2<-lagsarlm(votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr +statefips , data=trumpilot1, W2, zero.policy=TRUE)
+summary(spY2)
+
+#Make table:
+
+mytable_spY<-as.table(cbind(coef(spY1)[1:14],sqrt(diag(vcov(spY1)[1:14,1:14])),coef(spY2)[1:14],sqrt(diag(vcov(spY2)[1:14,1:14]))))
+row.names(mytable_spY)<-c("Rho","Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote")
+xtable(mytable_spY, digits=2)
+
+
+
+
+```
+
+Spatial Error:
+```{r}
+spE1<-errorsarlm(votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr +statefips, data=trumpilot1, W2, zero.policy=TRUE)
+summary(spE1)
+
+
+#M2
+spE2<-errorsarlm(votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr +statefips , data=trumpilot1, W2, zero.policy=TRUE)
+summary(spE2)
+
+#Make table:
+
+mytable_spE<-as.table(cbind(coef(spE1)[1:14],sqrt(diag(vcov(spE1)[1:14,1:14])),coef(spE2)[1:14],sqrt(diag(vcov(spE2)[1:14,1:14]))))
+row.names(mytable_spE)<-c("Lambda","Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote")
+xtable(mytable_spE, digits=2)
+
+```
+

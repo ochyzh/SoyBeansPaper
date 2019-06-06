@@ -16,6 +16,8 @@ library(tidyverse)
 library(magrittr)
 library(lme4)
 library(scales)
+library(xtable)
+library(fastDummies)
 
 ```
 
@@ -31,8 +33,37 @@ trumpilot<-subset(trumpilot, is.finite(votech) & Rep18!=0 & Rep16!=0 & Dem18!=0 
 
 ## Generate state variable for state fixed effects
 trumpilot$statefips <- as.factor(floor(trumpilot$FIPS/1000))
-trumpilot$soyval<-with(trumpilot, 100*sales_USD/(GDP2012*1000))
+trumpilot$soyval<-with(trumpilot, 100*sales_USD12/(GDP2012*1000))
 trumpilot$soyval[is.na(trumpilot$soyval)]<-0
+
+trumpilot$soycounty_bin<-as.numeric(trumpilot$prod_bush12>0 | trumpilot$prod_bush17>0)
+
+#Get districts for all counties:
+
+d<-read.table("dist2counties.txt", header=TRUE, sep=",")
+d<-left_join(d,subset(trumpilot, select=c("state","state_code","county_code")), by=c("State"="state_code","County"="county_code"))
+d<-na.omit(d)
+
+d$fixeff<-paste0(d$state,d$Congressional.District)
+d<-dummy_cols(d, select_columns=c("fixeff"))
+
+d1<- d %>% select(State, County,fixeff,Congressional.District) %>% group_by(State, County) %>%
+  summarise(dist_all=paste(fixeff, collapse=" "), dist_num=paste(Congressional.District, collapse=" "))
+d<- d %>% select(-state,-fixeff,-Congressional.District) %>% group_by(State, County) %>%
+  summarise_all(max)
+
+d<-left_join(d1,d,by=c("State","County"))  
+fixeffs<-left_join(trumpilot, d, by=c("state_code"="State","county_code"="County"))
+#Fix single-district states:
+fixeffs$fixeff_DE1=as.numeric(fixeffs$state=="DE")
+fixeffs$fixeff_MT1=as.numeric(fixeffs$state=="MT")
+fixeffs$fixeff_ND1=as.numeric(fixeffs$state=="ND")
+fixeffs$fixeff_SD1=as.numeric(fixeffs$state=="SD")
+fixeffs$fixeff_VT1=as.numeric(fixeffs$state=="VT")
+fixeffs$fixeff_WY1=as.numeric(fixeffs$state=="WY")
+
+fixeffs<- fixeffs %>% select(FIPS, dist_all, fixeff_AL2:fixeff_WY1)
+fixeffs[,3:431][is.na(fixeffs[,3:431])]<-0
 
 
 ```
@@ -51,15 +82,15 @@ center<-function(myvar){
 }
 
 tr_cr<-trumpilot %>% 
-  select(sales_USD,soyval,soyarea,prod_bush, GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,percwhite1317,percblack1317,perc_otherrace,perc_unemploy1317,perc_foreign1317,trumpmarg, Rep16perc,corn_bush,corn_usd,cotton_bales,cotton_usd)  %>% 
-  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perc_latino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,perc_white1317=percwhite1317*100,perc_white1317=percwhite1317*100,ln_perc_white1317=log(percwhite1317*100),perc_black1317=percblack1317*100,ln_perc_black1317=log(percblack1317*100+1),ln_perc_latino1317=log(perclatino1317*100+1),perc_unemploy1317=perc_unemploy1317*100,perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),sales_USD=sales_USD/100000, soyarea=soyarea/640,prod_bush=prod_bush/1000000, ln_sales_USD=log(sales_USD/1000+1), ln_bush_pop=log(prod_bush/(1000000*totpop1317)+1),ln_soyval=log(soyval+1), ln_soyarea=log(soyarea/640+1), ln_gdpc=log(GDP2015/totpop1317), ln_prod_bush=log(prod_bush+1), Rep16perc=Rep16perc*100,trumpmarg=trumpmarg*100, corn_usd=as.numeric(as.character(corn_usd))) %>% mutate(ln_perc_other=log(100*perc_otherrace+1),perc_other=100*perc_otherrace,ln_corn_bush=log(corn_bush+1), ln_corn_usd=log(corn_usd/1000+1),ln_cotton_bales=log(cotton_bales+1),ln_cotton_usd=log(cotton_usd/1000+1)) 
+  select(sales_USD12,soyval,soyarea12,prod_bush12, sales_USD17,soyarea17,prod_bush17,GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,percwhite1317,percblack1317,perc_otherrace,perc_unemploy1317,perc_foreign1317,trumpmarg, Rep16perc,corn_bush,corn_usd,cotton_bales,cotton_usd)  %>% 
+  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perc_latino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,perc_white1317=percwhite1317*100,perc_white1317=percwhite1317*100,ln_perc_white1317=log(percwhite1317*100),perc_black1317=percblack1317*100,ln_perc_black1317=log(percblack1317*100+1),ln_perc_latino1317=log(perclatino1317*100+1),perc_unemploy1317=perc_unemploy1317*100,perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),sales_USD12=sales_USD12/100000, soyarea12=soyarea12/640,prod_bush12=prod_bush12/1000000,prod_bush17=prod_bush17/1000000, ln_sales_USD12=log(sales_USD12/1000+1), ln_bush_pop=log(prod_bush12/(1000000*totpop1317)+1),ln_soyval=log(soyval+1), ln_soyarea12=log(soyarea12/640+1), ln_gdpc=log(GDP2015/totpop1317), ln_prod_bush12=log(prod_bush12+1),ln_soyarea17=log(soyarea17/640+1),ln_prod_bush17=log(prod_bush17+1),sales_USD17=sales_USD17/100000,ln_sales_USD17=log(sales_USD17/1000+1), Rep16perc=Rep16perc*100,trumpmarg=trumpmarg*100, corn_usd=as.numeric(as.character(corn_usd))) %>% mutate(ln_perc_other=log(100*perc_otherrace+1),perc_other=100*perc_otherrace,corn_bush=corn_bush/1000000,cotton_bales=cotton_bales/10000,ln_corn_bush=log(corn_bush+1), ln_corn_usd=log(corn_usd/1000+1),ln_cotton_bales=log(cotton_bales+1),ln_cotton_usd=log(cotton_usd/1000+1)) 
 
 tr_cr<-do.call(cbind,lapply(tr_cr,center))
 newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
 colnames(tr_cr)<-newnames
 
 
-trumpilot1<-cbind.data.frame(subset(trumpilot, select=c("statefips","state","county","Dist","Splitflag","votech")),tr_cr)
+trumpilot1<-cbind.data.frame(subset(trumpilot, select=c("FIPS","statefips","state","county","Dist","Splitflag","votech","soycounty_bin")),tr_cr)
 trumpilot1$ln_gdpc_sq_cr=trumpilot1$ln_gdpc_cr^2
 trumpilot1$ln_gdpc_cu_cr=trumpilot1$ln_gdpc_cr^3
 
@@ -70,13 +101,13 @@ Multi-level models:
 ```{r}
 ## All counties, predicted using bushels:
 
-summary(m1_full<-lmer( votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
+summary(m1_full<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
 
 summary(m2_full<-lmer(data = trumpilot1, votech ~ ln_soyval_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips)))
 
-summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  | statefips)))
+summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  | statefips)))
 
-summary(m4_full<-lmer(data = trumpilot1, votech ~ ln_soyarea_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips)))
+summary(m4_full<-lmer(data = trumpilot1, votech ~ ln_soyarea12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips)))
 
 
 summary(m5_full<-lmer(data = trumpilot1, votech ~ ln_bush_pop_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips)))
@@ -91,15 +122,15 @@ center<-function(myvar){
 }
 
 tr_cr<-trumpilot %>% filter(Splitflag==0) %>%
-  select(sales_USD,soyval,soyarea,prod_bush, GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,percwhite1317,percblack1317,perc_unemploy1317,perc_foreign1317,trumpmarg, PVI2015,perc_otherrace, Rep16perc,corn_bush,corn_usd,cotton_bales,cotton_usd)  %>% 
-  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perc_latino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,perc_white1317=percwhite1317*100,perc_white1317=percwhite1317*100,ln_perc_white1317=log(percwhite1317*100),perc_black1317=percblack1317*100,ln_perc_black1317=log(percblack1317*100+1),ln_perc_latino1317=log(perclatino1317*100+1),perc_unemploy1317=perc_unemploy1317*100,perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),sales_USD=sales_USD/100000, soyarea=soyarea/640,prod_bush=prod_bush/1000000, ln_sales_USD=log(sales_USD/1000+1), ln_bush_pop=log(prod_bush/(1000000*totpop1317)+1),ln_soyval=log(soyval+1), ln_soyarea=log(soyarea/640+1), ln_gdpc=log(GDP2015/totpop1317), ln_prod_bush=log(prod_bush+1),Rep16perc=Rep16perc*100,trumpmarg=trumpmarg*100,corn_usd=as.numeric(as.character(corn_usd))) %>% mutate(ln_perc_other=log(100*perc_otherrace+1),perc_other=100*perc_otherrace, ln_corn_bush=log(corn_bush+1), ln_corn_usd=log(corn_usd/1000+1),ln_cotton_bales=log(cotton_bales+1),ln_cotton_usd=log(cotton_usd/1000+1)) 
+  select(sales_USD12,soyval,soyarea12,prod_bush12,sales_USD17,soyarea17,prod_bush17, GDP2015, stateGDP, medinc1317,perc_HS_GED, perc_BA, totpop1317,urb2010,perclatino1317,percwhite1317,percblack1317,perc_unemploy1317,perc_foreign1317,trumpmarg, PVI2015,perc_otherrace, Rep16perc,corn_bush,corn_usd,cotton_bales,cotton_usd)  %>% 
+  mutate(ln_GDP2015=log(GDP2015/1000), ln_stateGDP=log(stateGDP/1000000), ln_inc=log(medinc1317/1000), ln_pop=log(totpop1317/1000), perc_latino1317=perclatino1317*100,perc_HS_GED=perc_HS_GED*100,perc_BA=perc_BA*100,perc_white1317=percwhite1317*100,perc_white1317=percwhite1317*100,ln_perc_white1317=log(percwhite1317*100),perc_black1317=percblack1317*100,ln_perc_black1317=log(percblack1317*100+1),ln_perc_latino1317=log(perclatino1317*100+1),perc_unemploy1317=perc_unemploy1317*100,perc_foreign1317=perc_foreign1317*100,ln_perc_foreign1317=log(perc_foreign1317*100+1),sales_USD12=sales_USD12/100000, soyarea12=soyarea12/640,prod_bush12=prod_bush12/1000000, ln_sales_USD12=log(sales_USD12/1000+1),prod_bush17=prod_bush17/1000000, ln_bush_pop=log(prod_bush12/(1000000*totpop1317)+1),ln_soyval=log(soyval+1), ln_soyarea12=log(soyarea12/640+1),ln_soyarea17=log(soyarea17/640+1),ln_prod_bush17=log(prod_bush17+1),sales_USD17=sales_USD17/100000,ln_sales_USD17=log(sales_USD17/1000+1), ln_gdpc=log(GDP2015/totpop1317), ln_prod_bush12=log(prod_bush12+1),Rep16perc=Rep16perc*100,trumpmarg=trumpmarg*100,corn_usd=as.numeric(as.character(corn_usd))) %>% mutate(ln_perc_other=log(100*perc_otherrace+1),perc_other=100*perc_otherrace, corn_bush=corn_bush/1000000,cotton_bales=cotton_bales/10000,ln_corn_bush=log(corn_bush+1), ln_corn_usd=log(corn_usd/1000+1),ln_cotton_bales=log(cotton_bales+1),ln_cotton_usd=log(cotton_usd/1000+1)) 
 
 tr_cr<-do.call(cbind,lapply(tr_cr,center))
 newnames<-paste(names(as.data.frame(tr_cr)),"_cr",sep="")
 colnames(tr_cr)<-newnames
 
 
-trumpilot2<-cbind.data.frame(subset(trumpilot[trumpilot$Splitflag==0,], select=c("statefips","state","county","Dist","votech","incshiftr","distname")),tr_cr)
+trumpilot2<-cbind.data.frame(subset(trumpilot[trumpilot$Splitflag==0,], select=c("FIPS","statefips","state","county","Dist","votech","incshiftr","distname","soycounty_bin")),tr_cr)
 trumpilot2$ln_gdpc_sq_cr=trumpilot2$ln_gdpc_cr^2
 trumpilot2$ln_gdpc_cu_cr=trumpilot2$ln_gdpc_cr^3
 ```
@@ -111,13 +142,13 @@ trumpilot2$ln_gdpc_cu_cr=trumpilot2$ln_gdpc_cr^3
 
 
 ##Counties not split between House districts, predicted using percent of county GDP from soybeans
-summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
+summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
 summary(m2<-lmer(data = trumpilot2, votech ~ soyval_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
-summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+(1 | statefips)))
+summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+(1 | statefips)))
 
-summary(m4<-lmer(data = trumpilot2, votech ~ ln_soyarea_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
+summary(m4<-lmer(data = trumpilot2, votech ~ ln_soyarea12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
 
 
@@ -140,7 +171,7 @@ xtable(mytable, digits=2)
 
 Plot Effects:
 ```{r}
-summary(m1_full<-lmer( votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_latino1317_cr+ln_perc_other_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
+summary(m1_full<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_latino1317_cr+ln_perc_other_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
 
 coef(m1_full) #coef calculates state-specific intercepts as re+fe
 fixef(m1_full) #main (average) effects
@@ -150,12 +181,12 @@ theme_set(theme_grey() + theme(panel.background = element_rect(fill = NA, color 
 
 
 
-ln_prod_bush=seq(min(log(trumpilot$prod_bush+1), na.rm=TRUE),max(log(trumpilot$prod_bush+1), na.rm=TRUE), by=.1)
+ln_prod_bush12=seq(min(log(trumpilot$prod_bush12+1), na.rm=TRUE),max(log(trumpilot$prod_bush12+1), na.rm=TRUE), by=.1)
 mycoef<-as.matrix(fixef(m1_full)[1:2])
 
 mycov<-vcov(m1_full)
-yhat<-cbind(1,ln_prod_bush)%*%mycoef
-se_yhat<-sqrt(mycov[1,1]+(ln_prod_bush^2)*mycov[2,2]+2*ln_prod_bush*mycov[1,2])
+yhat<-cbind(1,ln_prod_bush12)%*%mycoef
+se_yhat<-sqrt(mycov[1,1]+(ln_prod_bush12^2)*mycov[2,2]+2*ln_prod_bush12*mycov[1,2])
 
 
 
@@ -177,17 +208,17 @@ trumpmarg_cr<-mean(trumpilot1$trumpmarg_cr[trumpilot1$urb2010_cr==min(trumpilot1
 
 
 mycov<-vcov(m1_full)
-yhat<-cbind(1,ln_prod_bush,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,percblack1317_cr,perclatino1317_cr,perc_other_cr,perc_foreign1317_cr,trumpmarg_cr )%*%mycoef
-se_yhat<-sqrt(mycov[1,1]+(ln_prod_bush^2)*mycov[2,2]+(ln_gdpc_cr^2)*mycov[3,3]+(ln_gdpc_sq_cr^2)*mycov[4,4]+(perc_unemploy1317_cr^2)*mycov[5,5]+
+yhat<-cbind(1,ln_prod_bush12,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,percblack1317_cr,perclatino1317_cr,perc_other_cr,perc_foreign1317_cr,trumpmarg_cr )%*%mycoef
+se_yhat<-sqrt(mycov[1,1]+(ln_prod_bush12^2)*mycov[2,2]+(ln_gdpc_cr^2)*mycov[3,3]+(ln_gdpc_sq_cr^2)*mycov[4,4]+(perc_unemploy1317_cr^2)*mycov[5,5]+
                 (perc_HS_GED_cr^2)*mycov[6,6]+(perc_BA_cr^2)*mycov[7,7]+(urb2010_cr^2)*mycov[8,8]+(percblack1317_cr^2)*mycov[9,9]+(perclatino1317_cr^2)*mycov[10,10]+
                 (perc_other_cr^2)*mycov[11,11]+(perc_foreign1317_cr^2)*mycov[12,12]+(trumpmarg_cr^2)*mycov[13,13]+
-                2*ln_prod_bush*mycov[1,2]+2*ln_gdpc_cr*mycov[1,3]+2*ln_gdpc_sq_cr*mycov[1,4]+2*perc_unemploy1317_cr*mycov[1,5]+2*perc_HS_GED_cr*mycov[1,6]+#intercept
+                2*ln_prod_bush12*mycov[1,2]+2*ln_gdpc_cr*mycov[1,3]+2*ln_gdpc_sq_cr*mycov[1,4]+2*perc_unemploy1317_cr*mycov[1,5]+2*perc_HS_GED_cr*mycov[1,6]+#intercept
                 2*perc_BA_cr*mycov[1,7]+2*urb2010_cr*mycov[1,8]+2*percblack1317_cr*mycov[1,9]+2*perclatino1317_cr*mycov[1,10]+2*perc_other_cr*mycov[1,11]+ #intercept
                 2*perc_foreign1317_cr*mycov[1,12]+2*trumpmarg_cr*mycov[1,13]+                                                                              #intercept
-                2*ln_prod_bush*ln_gdpc_cr*mycov[2,3]+2*ln_prod_bush*ln_gdpc_sq_cr*mycov[2,4]+2*ln_prod_bush*perc_unemploy1317_cr*mycov[2,5]+               #bush
-                2*ln_prod_bush*perc_HS_GED_cr*mycov[2,6]+2*ln_prod_bush*perc_BA_cr*mycov[2,7]+2*ln_prod_bush*urb2010_cr*mycov[2,8]+                        #bush
-                2*ln_prod_bush*percblack1317_cr*mycov[2,9]+2*ln_prod_bush*perclatino1317_cr*mycov[2,10]+2*ln_prod_bush*perc_other_cr*mycov[2,11]+          #bush
-                2*ln_prod_bush*perc_foreign1317_cr*mycov[2,12]+2*ln_prod_bush*trumpmarg_cr*mycov[2,13]+                                                     #bush
+                2*ln_prod_bush12*ln_gdpc_cr*mycov[2,3]+2*ln_prod_bush12*ln_gdpc_sq_cr*mycov[2,4]+2*ln_prod_bush12*perc_unemploy1317_cr*mycov[2,5]+               #bush
+                2*ln_prod_bush12*perc_HS_GED_cr*mycov[2,6]+2*ln_prod_bush12*perc_BA_cr*mycov[2,7]+2*ln_prod_bush12*urb2010_cr*mycov[2,8]+                        #bush
+                2*ln_prod_bush12*percblack1317_cr*mycov[2,9]+2*ln_prod_bush12*perclatino1317_cr*mycov[2,10]+2*ln_prod_bush12*perc_other_cr*mycov[2,11]+          #bush
+                2*ln_prod_bush12*perc_foreign1317_cr*mycov[2,12]+2*ln_prod_bush12*trumpmarg_cr*mycov[2,13]+                                                     #bush
                 2*ln_gdpc_cr*ln_gdpc_sq_cr*mycov[3,4]+2*ln_gdpc_cr*perc_unemploy1317_cr*mycov[3,5]+                                                         #gdpc
                 2*ln_gdpc_cr*perc_HS_GED_cr*mycov[3,6]+2*ln_gdpc_cr*perc_BA_cr*mycov[3,7]+2*ln_gdpc_cr*urb2010_cr*mycov[3,8]+                               #gdpc
                 2*ln_gdpc_cr*percblack1317_cr*mycov[3,9]+2*ln_gdpc_cr*perclatino1317_cr*mycov[3,10]+2*ln_gdpc_cr*perc_other_cr*mycov[3,11]+                 #gdpc
@@ -221,7 +252,7 @@ se_yhat<-sqrt(mycov[1,1]+(ln_prod_bush^2)*mycov[2,2]+(ln_gdpc_cr^2)*mycov[3,3]+(
 
 
 
-p<-ggplot()+geom_line(aes(x=(exp(ln_prod_bush)/1000),y=yhat))+geom_ribbon(aes(x=(exp(ln_prod_bush)/1000), ymin=(yhat-2*se_yhat),ymax=(yhat+2*se_yhat)), alpha=.1) 
+p<-ggplot()+geom_line(aes(x=(exp(ln_prod_bush12)/1000),y=yhat))+geom_ribbon(aes(x=(exp(ln_prod_bush12)/1000), ymin=(yhat-2*se_yhat),ymax=(yhat+2*se_yhat)), alpha=.1) 
 p
 p + scale_y_continuous("Expected Change in Republican Vote Share, %",limits=c(-50,0),breaks=seq(-100,0,10), labels=seq(-100,0,10))+
 scale_x_log10("Soy Production, Thousands of Bushels", breaks=c(0.001,1,100,1000,10000), labels=c("none","1","100","1000","10000"))
@@ -233,16 +264,16 @@ Additional robustness checks for the R&R:
 ```{r}
 #Original four models from Table 1:
 #M1
-summary(m1_full<-lmer( votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
+summary(m1_full<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
 
 #M2
-summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  | statefips)))
+summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  | statefips)))
 
 #M3
-summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
+summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
 #M4
-summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+(1 | statefips)))
+summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr+(1 | statefips)))
 
 
 
@@ -257,17 +288,47 @@ with(trumpilot[!is.na(trumpilot$trumpmarg),], cor(Rep16marg, trumpmarg))
 
 #A model that controls for Rep2016 vote:
 #M1
-summary(m1_full<-lmer( votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr +  Rep16perc_cr + (1  | statefips),data = trumpilot1))
+summary(m1_rep16<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr + trumpmarg_cr+ Rep16perc_cr + (1  | statefips),data = trumpilot1))
 
 #M2
-summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr+ (1  | statefips)))
+summary(m2_rep16<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  trumpmarg_cr+Rep16perc_cr+ (1  | statefips)))
 
 #M3
-summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
+summary(m3_rep16<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+ trumpmarg_cr+ Rep16perc_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
 #M4
-summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr + incshiftr + PVI2015_cr+(1 | statefips)))
+summary(m4_rep16<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  trumpmarg_cr+Rep16perc_cr + incshiftr + PVI2015_cr+(1 | statefips)))
+
+#Make a table
+
+mytable_rep16<-as.table(cbind(c(fixef(m1_rep16),NA,NA),c(sqrt(diag(vcov(m1_rep16))),NA,NA),c(fixef(m2_rep16),NA,NA),c(sqrt(diag(vcov(m2_rep16))),NA,NA),fixef(m3_rep16),sqrt(diag(vcov(m3_rep16))),fixef(m4_rep16),sqrt(diag(vcov(m4_rep16)))))
+row.names(mytable_rep16)<-c("Constant","Soy Production","GDP/cap.","(GDP/cap.)^2","Unemployment","High-school","Bachelor's","Urbanization","Black","Other Non-White","Latino","Foreign","Trump's 2016 Margin","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_rep16, digits=2)
+
+
+#A model that substitutes Trump's Margin for Rep2016 vote:
+#M1
+summary(m1_notrump<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr +  Rep16perc_cr + (1  | statefips),data = trumpilot1))
+
+#M2
+summary(m2_notrump<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr+ (1  | statefips)))
+
+#M3
+summary(m3_notrump<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+  Rep16perc_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
+
+#M4
+summary(m4_notrump<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+ Rep16perc_cr + incshiftr + PVI2015_cr+(1 | statefips)))
+
+#Make a table
+
+mytable_notrump<-as.table(cbind(c(fixef(m1_notrump),NA,NA),c(sqrt(diag(vcov(m1_notrump))),NA,NA),                                c(fixef(m2_notrump),NA,NA),c(sqrt(diag(vcov(m2_notrump))),NA,NA),fixef(m3_notrump),sqrt(diag(vcov(m3_notrump))),fixef(m4_notrump),sqrt(diag(vcov(m4_notrump)))))
+row.names(mytable_notrump)<-c("Constant","Soy Production","GDP/cap.","(GDP/cap.)^2","Unemployment","High-school","Bachelor's","Urbanization","Black","Other Non-White","Latino","Foreign","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_notrump, digits=2)
+
+
+
 ```
+
 
 District-level RE:
 
@@ -276,53 +337,183 @@ trumpilot1$disteff<-as.factor(paste0(trumpilot1$state,trumpilot1$Dist))
 trumpilot2$disteff<-as.factor(paste0(trumpilot2$state,trumpilot2$Dist))
 
 #M1
-summary(m1_full<-lmer( votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  |  disteff) + (1 | statefips),data = trumpilot1))
+summary(m1_full<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  |  disteff) + (1 | statefips),data = trumpilot1))
 
 #M2
-summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  |  disteff)+ (1  | statefips)))
+summary(m3_full<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  |  disteff)+ (1  | statefips)))
 
 #M3
-summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr + (1  |  disteff)+ (1 | statefips)))
+summary(m1<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr + (1  |  disteff)+ (1 | statefips)))
 
 #M4
-summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr + (1  | disteff) + (1 | statefips)))
+summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr + (1  | disteff) + (1 | statefips)))
 
 ```
  
- State and district fixed effects:
- 
-```{r}
-#M1
-summary(m1_fe<-lm(votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + disteff +  statefips,data = trumpilot1))
 
-#M2
-summary(m2_fe<-lm(data = trumpilot1, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ disteff +  statefips))
-
-#M3
-summary(m3_fe<-lm(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr + disteff +  statefips))
-
-#M4
-summary(m4_fe<-lm(data = trumpilot2, votech ~ ln_sales_USD_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr + disteff +  statefips))
-```
- 
  Corn and cotton:
- State- and District-level RE:
 
 ```{r}
-trumpilot1$disteff<-as.factor(paste0(trumpilot1$state,trumpilot1$Dist))
-trumpilot2$disteff<-as.factor(paste0(trumpilot2$state,trumpilot2$Dist))
+
+
+cor(trumpilot1$ln_prod_bush12_cr,trumpilot1$ln_corn_bush_cr)
+cor(trumpilot1$ln_sales_USD12_cr,trumpilot1$ln_corn_usd_cr, use="complete.obs")
+
+cor(trumpilot1$ln_prod_bush12_cr,trumpilot1$ln_cotton_bales_cr)
+cor(trumpilot1$ln_sales_USD12_cr,trumpilot1$ln_cotton_usd_cr)
+
+
 
 #M1
-summary(m1_othercrops<-lmer( votech ~ ln_prod_bush_cr + ln_corn_bush_cr+ln_cotton_bales_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  |  disteff) + (1 | statefips),data = trumpilot1))
+summary(m1_othercrops<-lmer( votech ~ ln_prod_bush12_cr + ln_corn_bush_cr+ln_cotton_bales_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + (1 | statefips),data = trumpilot1))
 
 #M2
-summary(m2_othercrops<-lmer(data = trumpilot1, votech ~ ln_sales_USD_cr +ln_corn_usd_cr+ln_cotton_usd_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr+ (1  |  disteff)+ (1  | statefips)))
+summary(m2_othercrops<-lmer(data = trumpilot1, votech ~ ln_sales_USD12_cr +ln_corn_usd_cr+ln_cotton_usd_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr+ (1  | statefips)))
 
 #M3
-summary(m3_othercrops<-lmer(data = trumpilot2, votech ~ ln_prod_bush_cr + ln_corn_bush_cr+ln_cotton_bales_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr + (1  |  disteff)+ (1 | statefips)))
+summary(m3_othercrops<-lmer(data = trumpilot2, votech ~ ln_prod_bush12_cr + ln_corn_bush_cr+ln_cotton_bales_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr+ (1 | statefips)))
 
 #M4
-summary(m4_othercrops<-lmer(data = trumpilot2, votech ~ ln_sales_USD_cr +ln_corn_usd_cr+ln_cotton_usd_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + incshiftr + PVI2015_cr + (1  | disteff) + (1 | statefips)))
+summary(m4_othercrops<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr +ln_corn_usd_cr+ln_cotton_usd_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr  + (1 | statefips)))
+
+#Make a table
+mytable_othercrops<-as.table(cbind(c(fixef(m1_othercrops),NA,NA),c(sqrt(diag(vcov(m1_othercrops))),NA,NA),c(fixef(m2_othercrops),NA,NA),c(sqrt(diag(vcov(m2_othercrops))),NA,NA),fixef(m3_othercrops),sqrt(diag(vcov(m3_othercrops))),fixef(m4_othercrops),sqrt(diag(vcov(m4_othercrops)))))
+row.names(mytable_othercrops)<-c("Constant","Soy Production","Corn Production","Cotton Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_othercrops, digits=2)
+
+
+
+
+```
+
+Soy 2017:
+```{r}
+
+cor(trumpilot1$prod_bush12,trumpilot1$prod_bush17)
+cor(trumpilot1$ln_prod_bush12_cr,trumpilot1$ln_prod_bush17_cr)
+
+trumpilot1$soy_bush_diff=trumpilot1$prod_bush17_cr-trumpilot1$prod_bush12_cr
+trumpilot1$ln_soy_bush_diff=log(trumpilot1$prod_bush17_cr-trumpilot1$prod_bush12_cr+1.5)
+
+trumpilot1$soy_sales_diff=trumpilot1$sales_USD17_cr/1000-trumpilot1$sales_USD12_cr/1000
+trumpilot1$ln_soy_sales_diff=log(trumpilot1$sales_USD17_cr/1000-trumpilot1$sales_USD12_cr/1000+1)
+
+trumpilot2$soy_bush_diff=trumpilot2$prod_bush17_cr-trumpilot2$prod_bush12_cr
+trumpilot2$ln_soy_bush_diff=log(trumpilot2$prod_bush17_cr-trumpilot2$prod_bush12_cr+1.67)
+
+trumpilot2$soy_sales_diff=trumpilot2$sales_USD17_cr/1000-trumpilot2$sales_USD12_cr/1000
+trumpilot2$ln_soy_sales_diff=log(trumpilot2$sales_USD17_cr/1000-trumpilot2$sales_USD12_cr/1000+1)
+
+#Soy production 2017:
+#M1
+summary(m1_17<-lmer(votech ~ ln_prod_bush17_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + (1 | statefips),data = trumpilot1))
+
+
+#M2
+summary(m2_17<-lmer(votech ~ ln_sales_USD17_cr+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + (1 | statefips),data = trumpilot1))
+
+
+#M3
+summary(m3_17<-lmer(data = trumpilot2, votech ~ ln_prod_bush17_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr  + incshiftr + PVI2015_cr + (1 | statefips)))
+
+#M4
+summary(m4_17<-lmer(data = trumpilot2, votech ~ ln_sales_USD17_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr + (1 | statefips)))
+
+#Make a table
+
+mytable17<-as.table(cbind(c(fixef(m1_17),NA,NA),c(sqrt(diag(vcov(m1_17))),NA,NA),                                c(fixef(m2_17),NA,NA),c(sqrt(diag(vcov(m2_17))),NA,NA),fixef(m3_17),sqrt(diag(vcov(m3_17))),fixef(m4_17),sqrt(diag(vcov(m4_17)))))
+row.names(mytable17)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable17, digits=2)
+
+
+
+
+```
+
+Diff in diff:
+
+```{r}
+#diff re
+summary(m1_dd<-lmer(votech ~ ln_soy_bush_diff+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + (1 | statefips),data = trumpilot1[trumpilot1$soycounty_bin==1,]))
+
+
+#M2
+summary(m2_dd<-lmer(votech ~ ln_soy_sales_diff+ ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + (1 | statefips),data = trumpilot1[trumpilot1$soycounty_bin==1,]))
+
+
+#M3
+summary(m3_dd<-lmer(data = trumpilot2[trumpilot2$soycounty_bin==1,], votech ~ ln_soy_bush_diff + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr  + incshiftr + PVI2015_cr + (1 | statefips)))
+
+#M4
+summary(m4_dd<-lmer(data = trumpilot2[trumpilot2$soycounty_bin==1,], votech ~ ln_soy_sales_diff + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+Rep16perc_cr + incshiftr + PVI2015_cr + (1 | statefips)))
+
+mytableDD<-as.table(cbind(c(fixef(m1_dd),NA,NA),c(sqrt(diag(vcov(m1_dd))),NA,NA),                                fixef(m3_dd),sqrt(diag(vcov(m3_dd)))))
+row.names(mytableDD)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytableDD, digits=2)
+
+```
+
+State and District fixed effects:
+```{r}
+trumpilot1<-left_join(trumpilot1,fixeffs, by="FIPS")
+trumpilot2<-left_join(trumpilot2,fixeffs, by="FIPS")
+
+myvars_both<- trumpilot1 %>% select(votech,ln_prod_bush12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,statefips,fixeff_AL2:fixeff_WY1)
+myvars_disteffs<- trumpilot1 %>% select(votech,ln_prod_bush12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,fixeff_AL2:fixeff_WY1)
+myvars_stateeffs<- trumpilot1 %>% select(votech,ln_prod_bush12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,statefips)
+
+#M1
+summary(m1_2fe<-lm(votech ~ .,data = myvars_both))
+summary(m1_dfe<-lm(votech ~ .,data = myvars_disteffs))
+summary(m1_sfe<-lm(votech ~ .,data = myvars_stateeffs))
+
+
+myvars_both2<- trumpilot1 %>% select(votech,ln_sales_USD12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,statefips,fixeff_AL2:fixeff_WY1)
+myvars_disteffs2<- trumpilot1 %>% select(votech,ln_sales_USD12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,fixeff_AL2:fixeff_WY1)
+myvars_stateeffs2<- trumpilot1 %>% select(votech,ln_sales_USD12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,statefips)
+
+#M2
+summary(m2_2fe<-lm(votech ~ .,data = myvars_both2))
+summary(m2_dfe<-lm(votech ~ .,data = myvars_disteffs2))
+summary(m2_sfe<-lm(votech ~ .,data = myvars_stateeffs2))
+
+
+myvars_both3<- trumpilot2 %>% select(votech,ln_prod_bush12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,incshiftr,PVI2015_cr,statefips,fixeff_AL2:fixeff_WY1)
+myvars_disteffs3<- trumpilot2 %>% select(votech,ln_prod_bush12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,incshiftr,PVI2015_cr,fixeff_AL2:fixeff_WY1)
+myvars_stateeffs3<- trumpilot2 %>% select(votech,ln_prod_bush12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,incshiftr,PVI2015_cr,statefips)
+
+#M3
+summary(m3_2fe<-lm(votech ~ .,data = myvars_both3))
+summary(m3_dfe<-lm(votech ~ .,data = myvars_disteffs3))
+summary(m3_sfe<-lm(votech ~ .,data = myvars_stateeffs3))
+
+
+myvars_both4<- trumpilot2 %>% select(votech,ln_sales_USD12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,statefips,incshiftr,PVI2015_cr,fixeff_AL2:fixeff_WY1)
+myvars_disteffs4<- trumpilot2 %>% select(votech,ln_sales_USD12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr,incshiftr,PVI2015_cr,fixeff_AL2:fixeff_WY1)
+myvars_stateeffs4<- trumpilot2 %>% select(votech,ln_sales_USD12_cr,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,ln_perc_black1317_cr,ln_perc_other_cr,ln_perc_latino1317_cr,ln_perc_foreign1317_cr,Rep16perc_cr, incshiftr,PVI2015_cr,statefips)
+
+#M4
+summary(m4_2fe<-lm(votech ~ .,data = myvars_both4))
+summary(m4_dfe<-lm(votech ~ .,data = myvars_disteffs4))
+summary(m4_sfe<-lm(votech ~ .,data = myvars_stateeffs4))
+
+#Make tables
+#State FE:
+mytable_sfe<-as.table(cbind(c(coef(m1_sfe)[1:13],NA,NA),c(sqrt(diag(vcov(m1_sfe)[1:13,1:13])),NA,NA),                                c(coef(m2_sfe)[1:13],NA,NA),c(sqrt(diag(vcov(m2_sfe)[1:13,1:13])),NA,NA),coef(m3_sfe)[1:15],sqrt(diag(vcov(m3_sfe)[1:15,1:15])),coef(m4_sfe)[1:15],sqrt(diag(vcov(m4_sfe)[1:15,1:15]))))
+row.names(mytable_sfe)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_sfe, digits=2)
+
+#District FE:
+mytable_dfe<-as.table(cbind(c(coef(m1_dfe)[1:13],NA,NA),c(sqrt(diag(vcov(m1_dfe)[1:13,1:13])),NA,NA),                                c(coef(m2_dfe)[1:13],NA,NA),c(sqrt(diag(vcov(m2_dfe)[1:13,1:13])),NA,NA),coef(m3_dfe)[1:15],sqrt(diag(vcov(m3_dfe)[1:15,1:15])),coef(m4_dfe)[1:15],sqrt(diag(vcov(m4_dfe)[1:15,1:15]))))
+row.names(mytable_dfe)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_dfe, digits=2)
+
+#Two-way FE:
+mytable_2fe<-as.table(cbind(c(coef(m1_2fe)[1:13],NA,NA),c(sqrt(diag(vcov(m1_2fe)[1:13,1:13])),NA,NA),                                c(coef(m2_2fe)[1:13],NA,NA),c(sqrt(diag(vcov(m2_2fe)[1:13,1:13])),NA,NA),coef(m3_2fe)[1:15],sqrt(diag(vcov(m3_2fe)[1:15,1:15])),coef(m4_2fe)[1:15],sqrt(diag(vcov(m4_2fe)[1:15,1:15]))))
+row.names(mytable_2fe)<-c("Constant","Soy Production","GDP/cap., logged","(GDP/cap., logged)^2","Unemployment","High-school Diploma","Bachelor's Degree","Urbanization","Black, logged","Other Non-White, logged","Latino, logged","Foreign, logged","Rep 2016 Vote","$\\Delta$Incumbent","Dist. Ideology")
+xtable(mytable_2fe, digits=2)
+
+
 
 ```
 

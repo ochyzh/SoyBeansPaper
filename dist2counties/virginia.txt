@@ -1,0 +1,135 @@
+County/Independent City                                                     Congressional District
+Accomack                                                                                         2
+Albemarle                                                                                        5
+Alexandria city                                                                                  8
+Alleghany                                                                                        9
+Amelia                                                                                           7
+Amherst                                                                                          6
+Appomattox                                                                                       5
+Arlington                                                                                        8
+Augusta                                                                                          6
+Bath                                                                                             6
+Bedford                                                                                        5,6
+Bedford city                                                                                     5
+Bland                                                                                            9
+Botetourt                                                                                        6
+Bristol city                                                                                     9
+Brunswick                                                                                        5
+Buchanan                                                                                         9
+Buckingham                                                                                       5
+Buena Vista city                                                                                 6
+Campbell                                                                                         5
+Caroline                                                                                         1
+Carroll                                                                                          9
+Charles City                                                                                     4
+Charlotte                                                                                        5
+Charlottesville city                                                                             5
+Chesapeake city                                                                                3,4
+Chesterfield                                                                                   4,7
+Clarke                                                                                          10
+Colonial Heights city                                                                            4
+Covington city                                                                                   9
+Craig                                                                                            9
+Culpeper                                                                                         7
+Cumberland                                                                                       5
+Danville city                                                                                    5
+Dickenson                                                                                        9
+Dinwiddie                                                                                        4
+Emporia city                                                                                     4
+Essex                                                                                            1
+Fairfax                                                                                    8,10,11
+Fairfax city                                                                                    11
+Falls Church city                                                                                8
+Fauquier                                                                                       1,5
+Floyd                                                                                            9
+Fluvanna                                                                                         5
+Franklin                                                                                         5
+Franklin city                                                                                    3
+Frederick                                                                                       10
+Fredericksburg city                                                                              1
+Galax city                                                                                       9
+Giles                                                                                            9
+Gloucester                                                                                       1
+Goochland                                                                                        7
+Grayson                                                                                          9
+Greene                                                                                           5
+Greensville                                                                                      4
+Halifax                                                                                          5
+Hampton city                                                                                   2,3
+Hanover                                                                                          1
+Harrisonburg city                                                                                6
+Henrico                                                                                        4,7
+Henry                                                                                          5,9
+Highland                                                                                         6
+Hopewell city                                                                                    4
+Isle of Wight                                                                                    3
+James City                                                                                     1,2
+King George                                                                                      1
+King William                                                                                     1
+King and Queen                                                                                   1
+Lancaster                                                                                        1
+Lee                                                                                              9
+Lexington city                                                                                   6
+Loudoun                                                                                         10
+Louisa                                                                                           7
+Lunenburg                                                                                        5
+Lynchburg city                                                                                   6
+Madison                                                                                          5
+Manassas Park city                                                                              10
+Manassas city                                                                                   10
+Martinsville city                                                                                9
+Mathews                                                                                          1
+Mecklenburg                                                                                      5
+Middlesex                                                                                        1
+Montgomery                                                                                       9
+Nelson                                                                                           5
+New Kent                                                                                         1
+Newport News city                                                                                3
+Norfolk city                                                                                   2,3
+Northampton                                                                                      2
+Northumberland                                                                                   1
+Norton city                                                                                      9
+Nottoway                                                                                         7
+Orange                                                                                           7
+Page                                                                                             6
+Patrick                                                                                          9
+Petersburg city                                                                                  4
+Pittsylvania                                                                                     5
+Poquoson city                                                                                    2
+Portsmouth city                                                                                  3
+Powhatan                                                                                         7
+Prince Edward                                                                                    5
+Prince George                                                                                    4
+Prince William                                                                             1,10,11
+Pulaski                                                                                          9
+Radford city                                                                                     9
+Rappahannock                                                                                     5
+Richmond                                                                                         1
+Richmond city                                                                                    4
+Roanoke                                                                                        6,9
+Roanoke city                                                                                     6
+Rockbridge                                                                                       6
+Rockingham                                                                                       6
+Russell                                                                                          9
+Salem city                                                                                       9
+Scott                                                                                            9
+Shenandoah                                                                                       6
+Smyth                                                                                            9
+Southampton                                                                                      4
+Spotsylvania                                                                                   1,7
+Stafford                                                                                         1
+Staunton city                                                                                    6
+Suffolk city                                                                                   3,4
+Surry                                                                                            4
+Sussex                                                                                           4
+Tazewell                                                                                         9
+Virginia Beach city                                                                              2
+Warren                                                                                           6
+Washington                                                                                       9
+Waynesboro city                                                                                  6
+Westmoreland                                                                                     1
+Williamsburg city                                                                                2
+Winchester city                                                                                 10
+Wise                                                                                             9
+Wythe                                                                                            9
+York                                                                                             2

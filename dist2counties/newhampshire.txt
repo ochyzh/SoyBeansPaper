@@ -1,0 +1,11 @@
+County                                                                      Congressional District
+Belknap                                                                                        1,2
+Carroll                                                                                          1
+Cheshire                                                                                         2
+Coos                                                                                             2
+Grafton                                                                                        1,2
+Hillsborough                                                                                   1,2
+Merrimack                                                                                      1,2
+Rockingham                                                                                     1,2
+Strafford                                                                                        1
+Sullivan                                                                                         2
