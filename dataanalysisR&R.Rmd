@@ -18,6 +18,7 @@ library(lme4)
 library(scales)
 library(xtable)
 library(fastDummies)
+library(MASS)
 
 ```
 
@@ -260,9 +261,9 @@ ggsave("fitted1.pdf")
 
 ```
 
-Additional robustness checks for the R&R:
-```{r}
 #Original four models from Table 1:
+```{r}
+
 #M1
 summary(m1_full<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr+trumpmarg_cr + (1  | statefips),data = trumpilot1))
 
@@ -279,6 +280,9 @@ summary(m3<-lmer(data = trumpilot2, votech ~ ln_sales_USD12_cr + ln_gdpc_cr+ln_g
 
 ```
 
+
+
+Robustness checks for the R&R:
 Controlling for Rep2016 percent of the two-party vote:
 ```{r}
 #Correlation between Rep2016 margin and Trump margin:
@@ -328,6 +332,66 @@ xtable(mytable_notrump, digits=2)
 
 
 ```
+
+Make a graph of predicted diff in vote margin from new Model 1
+```{r}
+#M1
+summary(m1_notrump<-lmer( votech ~ ln_prod_bush12_cr + ln_gdpc_cr+ln_gdpc_sq_cr+perc_unemploy1317_cr+perc_HS_GED_cr+perc_BA_cr+urb2010_cr+ln_perc_black1317_cr+ln_perc_other_cr+ln_perc_latino1317_cr+ln_perc_foreign1317_cr +  Rep16perc_cr + (1  | statefips),data = trumpilot1))
+
+
+coef(m1_notrump) #coef calculates state-specific intercepts as re+fe
+fixef(m1_notrump) #main (average) effects
+ranef(m1_notrump) #Random (state-level) intercepts
+theme_set(theme_grey() + theme(panel.background = element_rect(fill = NA, color = 'black'))+ theme(axis.text=element_text(size=10),
+					axis.title=element_text(size=12,face="bold")))
+
+
+
+ln_prod_bush12=seq(min(log(trumpilot$prod_bush12+1), na.rm=TRUE),max(log(trumpilot$prod_bush12+1), na.rm=TRUE), by=.1)
+mycoef<-as.matrix(fixef(m1_full)[1:2])
+
+mycov<-vcov(m1_notrump)
+
+
+
+#A rural non-diverse county:
+mycoef<-as.matrix(fixef(m1_notrump))
+urb2010_cr<-min(trumpilot1$urb2010_cr, na.rm=TRUE)
+ln_gdpc_cr<-mean(trumpilot1$ln_gdpc_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+ln_gdpc_sq_cr<-ln_gdpc_cr^2
+perc_unemploy1317_cr<-mean(trumpilot1$perc_unemploy1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_HS_GED_cr<-mean(trumpilot1$perc_HS_GED_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_BA_cr<-mean(trumpilot1$perc_BA_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+percblack1317_cr<-mean(trumpilot1$ln_perc_black1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perclatino1317_cr<-mean(trumpilot1$ln_perc_latino1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_other_cr<-mean(trumpilot1$ln_perc_other_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+perc_foreign1317_cr<-mean(trumpilot1$ln_perc_foreign1317_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+Rep16perc_cr<-mean(trumpilot1$Rep16perc_cr[trumpilot1$urb2010_cr==min(trumpilot1$urb2010_cr, na.rm=TRUE)], na.rm=TRUE)
+
+yhat<-cbind(1,ln_prod_bush12,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,percblack1317_cr,perc_other_cr,perclatino1317_cr,perc_foreign1317_cr,Rep16perc_cr)%*%mycoef
+
+mycoef1000<-mvrnorm(1000,mycoef,mycov)
+
+yhat1000<-function(mycoef1000){
+yhat1000<-cbind(1,ln_prod_bush12,ln_gdpc_cr,ln_gdpc_sq_cr,perc_unemploy1317_cr,perc_HS_GED_cr,perc_BA_cr,urb2010_cr,percblack1317_cr,perc_other_cr,perclatino1317_cr,perc_foreign1317_cr,Rep16perc_cr)%*%mycoef1000
+}
+
+sims<-yhat1000(mycoef1000[1,])
+sims1000<-apply(mycoef1000,1, function(x) yhat1000(x))
+yhat_sim<-rowMeans(sims1000)
+se_sim<-apply(sims1000, 1, sd)
+
+p<-ggplot()+geom_line(aes(x=(exp(ln_prod_bush12)/1000),y=yhat_sim))+geom_ribbon(aes(x=(exp(ln_prod_bush12)/1000), ymin=(yhat_sim-2*se_sim),ymax=(yhat_sim+2*se_sim)), alpha=.1) 
+p+ geom_rug(aes(x=trumpilot$prod_bush12/1000),alpha = .5)
+p
+
+p+ geom_rug(aes(x=(trumpilot$prod_bush12/1000+0.001)),alpha = .5, position = "jitter") +scale_y_continuous("Expected Change in Republican Vote Share, %",limits=c(-50,0),breaks=seq(-100,0,10), labels=seq(-100,0,10))+
+scale_x_log10("Soy Production, Thousands of Bushels", breaks=c(0.001,1,100,1000,10000), labels=c("none","1","100","1000","10000"))
+ggsave("fitted2.pdf")
+
+
+```
+
 
 
 District-level RE:
